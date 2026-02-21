@@ -1,8 +1,7 @@
 import { motion } from 'framer-motion';
 
-const VIBECHECK_IMG = '/vibecheck.png';
-const SPICES_IMG =
-  'https://images.unsplash.com/photo-1506368249639-73a05d6f6488?w=600&q=80';
+const VIBECHECK_IMG = '/Vibecheckk.png';
+const SPICES_IMG = '/vib.png';
 
 export function VibeCheck() {
   return (
