@@ -66,7 +66,7 @@ export function Footer() {
         </div>
 
         <div className="flex flex-col md:flex-row justify-between items-center border-t-2 border-text-chocolate/20 pt-8 text-sm font-bold text-text-chocolate/60">
-          <p>© 2025 snacQO Snacks Inc. Don&apos;t steal our vibes.</p>
+          <p>© 2026 snacQO Snacks Inc. Don&apos;t steal our vibes.</p>
           <p className="mt-2 md:mt-0">Designed for Gen Z, by Gen Z (mostly).</p>
         </div>
       </div>
