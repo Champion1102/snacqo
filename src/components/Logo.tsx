@@ -23,8 +23,8 @@ export function Logo({ size = 'sm', className = '' }: LogoProps) {
       <span className={`block ${s.snac} -mt-0`} style={{ textShadow: size === 'lg' ? '4px 4px 0px #2D1B0E' : '2px 2px 0px #2D1B0E' }}>
         snac
       </span>
-      <span className={`block ${s.qo} ${s.mt}`} style={{ textShadow: size === 'lg' ? '6px 6px 0px #2D1B0E' : '2px 2px 0px #2D1B0E' }}>
-        QO
+      <span className={`block ${s.qo} ${s.mt} relative inline-block`} style={{ textShadow: size === 'lg' ? '6px 6px 0px #2D1B0E' : '2px 2px 0px #2D1B0E' }}>
+        QO<span className="text-[0.28em] font-black text-primary align-super leading-none" style={{ textShadow: 'none', verticalAlign: 'super', fontSize: '0.28em' }}>™</span>
       </span>
     </motion.div>
   );

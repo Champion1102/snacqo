@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { Logo } from './Logo';
 
 export function Footer() {
@@ -11,9 +12,9 @@ export function Footer() {
 
       <div className="max-w-7xl mx-auto px-6 relative z-10">
         <div className="flex flex-col md:flex-row justify-between items-start gap-12 mb-12">
-          <a className="flex items-center gap-2" href="#">
+          <Link to="/" className="flex items-center gap-2">
             <Logo size="md" />
-          </a>
+          </Link>
           <div className="flex flex-col md:flex-row gap-8 md:gap-16">
             <div>
               <h4 className="font-black text-text-chocolate uppercase tracking-widest mb-4 border-b-2 border-text-chocolate inline-block">
@@ -22,24 +23,21 @@ export function Footer() {
               <div className="flex flex-col gap-2">
                 <a
                   className="text-text-chocolate font-bold hover:text-primary hover:translate-x-1 transition-all flex items-center gap-2"
-                  href="#"
+                  href="https://www.instagram.com/snacqo/"
+                  target="_blank"
+                  rel="noopener noreferrer"
                 >
                   <span className="material-symbols-outlined text-lg">photo_camera</span>
                   Instagram
                 </a>
                 <a
                   className="text-text-chocolate font-bold hover:text-primary hover:translate-x-1 transition-all flex items-center gap-2"
-                  href="#"
+                  href="https://www.linkedin.com/company/snacqo/"
+                  target="_blank"
+                  rel="noopener noreferrer"
                 >
-                  <span className="material-symbols-outlined text-lg">music_note</span>
-                  TikTok
-                </a>
-                <a
-                  className="text-text-chocolate font-bold hover:text-primary hover:translate-x-1 transition-all flex items-center gap-2"
-                  href="#"
-                >
-                  <span className="material-symbols-outlined text-lg">flutter_dash</span>
-                  Twitter
+                  <span className="material-symbols-outlined text-lg">work</span>
+                  LinkedIn
                 </a>
               </div>
             </div>
@@ -48,18 +46,24 @@ export function Footer() {
                 Legal Stuff
               </h4>
               <div className="flex flex-col gap-2">
-                <a
+                <Link
+                  to="/privacy-policy"
                   className="text-text-chocolate font-bold hover:text-primary hover:translate-x-1 transition-all"
-                  href="#"
                 >
                   Privacy Policy
-                </a>
-                <a
+                </Link>
+                <Link
+                  to="/terms-and-conditions"
                   className="text-text-chocolate font-bold hover:text-primary hover:translate-x-1 transition-all"
-                  href="#"
                 >
                   Terms of Service
-                </a>
+                </Link>
+                <Link
+                  to="/return-refund-policy"
+                  className="text-text-chocolate font-bold hover:text-primary hover:translate-x-1 transition-all"
+                >
+                  Return & Refund Policy
+                </Link>
               </div>
             </div>
           </div>
@@ -67,7 +71,7 @@ export function Footer() {
 
         <div className="flex flex-col md:flex-row justify-between items-center border-t-2 border-text-chocolate/20 pt-8 text-sm font-bold text-text-chocolate/60">
           <p>© 2026 snacQO Snacks Inc. Don&apos;t steal our vibes.</p>
-          <p className="mt-2 md:mt-0">Designed for Gen Z, by Gen Z (mostly).</p>
+          <p className="mt-2 md:mt-0">Designed for Gen Z, by Gen Z.</p>
         </div>
       </div>
     </footer>
