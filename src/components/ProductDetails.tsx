@@ -51,19 +51,19 @@ export function ProductDetails({ product, onAddToCart }: ProductDetailsProps) {
             </span>
           </div>
         </div>
-        <h1 className="product-font font-bold text-3xl sm:text-4xl md:text-5xl text-text-chocolate leading-[0.9] mb-4 uppercase tracking-wide">
+        <h1 className="product-font font-bold text-2xl sm:text-3xl md:text-4xl lg:text-5xl text-text-chocolate leading-[0.9] mb-4 uppercase tracking-wide">
           {product.titlePart1} <br />
           <span className="text-accent-mango">{product.titlePart2}</span>
         </h1>
-        <p className="text-base sm:text-lg font-medium text-text-chocolate/80 leading-relaxed max-w-md">
+        <p className="text-sm sm:text-base md:text-lg font-medium text-text-chocolate/80 leading-relaxed max-w-md">
           {product.description}
         </p>
         <div className="flex items-end gap-3 mt-4">
-          <span className="text-2xl sm:text-3xl font-black text-text-chocolate product-font">
+          <span className="text-xl sm:text-2xl md:text-3xl font-black text-text-chocolate product-font">
             {selectedSize?.price ?? product.price}
           </span>
           {(selectedSize?.compareAtPrice ?? product.compareAtPrice) && (
-            <span className="text-base sm:text-lg text-text-chocolate/50 line-through font-bold decoration-2 mb-1">
+            <span className="text-sm sm:text-base md:text-lg text-text-chocolate/50 line-through font-bold decoration-2 mb-1">
               {selectedSize?.compareAtPrice ?? product.compareAtPrice}
             </span>
           )}
@@ -87,7 +87,7 @@ export function ProductDetails({ product, onAddToCart }: ProductDetailsProps) {
                   type="button"
                   onClick={() => !outOfStock && setSelectedSizeId(size.id)}
                   disabled={outOfStock}
-                  className={`flex-1 py-3 px-4 border-2 border-text-chocolate font-bold text-center product-font uppercase transition-all ${
+                  className={`flex-1 py-2.5 px-3 border-2 border-text-chocolate font-bold text-center product-font uppercase text-sm sm:text-base transition-all ${
                     outOfStock
                       ? 'bg-gray-100 text-text-chocolate/50 cursor-not-allowed opacity-70'
                       : isSelected
@@ -104,47 +104,47 @@ export function ProductDetails({ product, onAddToCart }: ProductDetailsProps) {
             })}
           </div>
         </div>
-        <div className="flex flex-col sm:flex-row gap-4 pt-2">
-          <div className="flex items-center bg-white border-2 border-text-chocolate shadow-chunky h-14 sm:h-16 w-full sm:w-1/3">
+        <div className="flex flex-row gap-3 pt-1">
+          <div className="flex items-center bg-white border-2 border-text-chocolate shadow-chunky h-[52px] sm:h-16 w-[120px] sm:w-[140px] flex-shrink-0">
             <button
               type="button"
               onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-              className="w-12 h-full flex items-center justify-center hover:bg-gray-100 border-r-2 border-text-chocolate transition-colors"
+              className="w-10 sm:w-12 h-full flex items-center justify-center hover:bg-gray-100 border-r-2 border-text-chocolate transition-colors"
               aria-label="Decrease quantity"
             >
-              <span className="material-symbols-outlined font-bold">remove</span>
+              <span className="material-symbols-outlined text-base font-bold">remove</span>
             </button>
             <input
               type="number"
               min={1}
               value={quantity}
               onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value, 10) || 1))}
-              className="w-full h-full text-center text-lg sm:text-xl font-bold border-none focus:ring-0 p-0 text-text-chocolate bg-transparent product-font"
+              className="w-full h-full text-center text-base sm:text-xl font-bold border-none focus:ring-0 p-0 text-text-chocolate bg-transparent product-font"
               aria-label="Quantity"
             />
             <button
               type="button"
               onClick={() => setQuantity((q) => q + 1)}
-              className="w-12 h-full flex items-center justify-center hover:bg-gray-100 border-l-2 border-text-chocolate transition-colors"
+              className="w-10 sm:w-12 h-full flex items-center justify-center hover:bg-gray-100 border-l-2 border-text-chocolate transition-colors"
               aria-label="Increase quantity"
             >
-              <span className="material-symbols-outlined font-bold">add</span>
+              <span className="material-symbols-outlined text-base font-bold">add</span>
             </button>
           </div>
           {isOutOfStock ? (
-            <div className="flex-1 h-14 sm:h-16 bg-text-chocolate/20 text-text-chocolate/70 border-2 border-text-chocolate/40 flex items-center justify-center gap-2 text-base sm:text-lg btn-text uppercase tracking-wider cursor-not-allowed">
+            <div className="flex-1 h-[52px] sm:h-16 bg-text-chocolate/20 text-text-chocolate/70 border-2 border-text-chocolate/40 flex items-center justify-center gap-2 text-sm sm:text-lg btn-text uppercase tracking-wider cursor-not-allowed">
               <span>Out of stock</span>
             </div>
           ) : (
             <motion.button
               type="button"
               onClick={handleAddToCart}
-              className="flex-1 h-14 sm:h-16 bg-accent-mango text-text-chocolate border-2 border-text-chocolate shadow-chunky-lg hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-chunky hover:-rotate-1 transition-all flex items-center justify-center gap-3 text-base sm:text-lg btn-text uppercase tracking-wider group"
+              className="flex-1 h-[52px] sm:h-16 bg-accent-mango text-text-chocolate border-2 border-text-chocolate shadow-chunky-lg hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-chunky hover:-rotate-1 transition-all flex items-center justify-center gap-2 sm:gap-3 text-sm sm:text-lg btn-text uppercase tracking-wide group"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
               <span>Add To Cart</span>
-              <span className="material-symbols-outlined group-hover:animate-bounce">
+              <span className="material-symbols-outlined text-base sm:text-xl group-hover:animate-bounce">
                 shopping_cart
               </span>
             </motion.button>
