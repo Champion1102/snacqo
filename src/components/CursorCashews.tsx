@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from 'react';
-import { useMotionValue, useSpring, useTransform, motion } from 'framer-motion';
+import { type MotionValue, useMotionValue, useSpring, useTransform, motion } from 'framer-motion';
 
 const TRAIL_COUNT = 12;
 const SIZE = 28;
@@ -21,7 +21,7 @@ const TRAIL_IMAGES: string[] = [
 ];
 
 // Stagger stiffness so later items trail more (lower stiffness = more lag)
-function useTrailingPosition(mouseX: ReturnType<typeof useMotionValue>, mouseY: ReturnType<typeof useMotionValue>, index: number) {
+function useTrailingPosition(mouseX: MotionValue<number>, mouseY: MotionValue<number>, index: number) {
   const stiffness = Math.max(20, SPRING_BASE.stiffness - index * 6);
   const springX = useSpring(mouseX, { stiffness, damping: SPRING_BASE.damping });
   const springY = useSpring(mouseY, { stiffness, damping: SPRING_BASE.damping });
@@ -67,8 +67,8 @@ function CursorTrailItem({
   src,
 }: {
   index: number;
-  mouseX: ReturnType<typeof useMotionValue>;
-  mouseY: ReturnType<typeof useMotionValue>;
+  mouseX: MotionValue<number>;
+  mouseY: MotionValue<number>;
   src: string;
 }) {
   const { x, y } = useTrailingPosition(mouseX, mouseY, index);

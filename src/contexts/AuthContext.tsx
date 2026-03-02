@@ -17,13 +17,11 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
-  const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
     getMe()
       .then(({ user: u }) => setUser(u))
-      .catch(() => setUser(null))
-      .finally(() => setInitialized(true));
+      .catch(() => setUser(null));
   }, []);
 
   const isLoggedIn = !!user;

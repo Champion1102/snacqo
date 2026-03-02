@@ -34,7 +34,6 @@ export async function requestFormData<T>(path: string, formData: FormData, metho
   const res = await fetch(url, {
     method,
     credentials: 'include',
-    headers,
     body: formData,
   });
 
