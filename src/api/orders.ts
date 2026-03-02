@@ -45,6 +45,7 @@ export interface OrderResponse {
   shippingPincode: string;
   razorpayPaymentId?: string | null;
   razorpayOrderId?: string | null;
+  razorpayPaymentStatus?: string | null; // Razorpay: captured | failed | authorized | created | refunded
   createdAt: string;
   items?: OrderItemResponse[];
   _count?: { items: number };

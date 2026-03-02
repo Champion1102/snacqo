@@ -23,7 +23,6 @@ function formatOrderStatus(status: string): string {
   if (s === 'CANCELLED') return 'Cancelled';
   if (s === 'OUT_FOR_DELIVERY') return 'Out for delivery';
   if (s === 'SHIPPED') return 'Shipped';
-  if (s === 'PAID') return 'Paid';
   if (s === 'PENDING') return 'Pending';
   if (s === 'PROCESSING') return 'Processing';
   return 'Processing';

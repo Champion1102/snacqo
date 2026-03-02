@@ -15,14 +15,6 @@ type StatusConfig = {
 
 function getStatusConfig(status: string): StatusConfig {
   const s = (status || '').toUpperCase();
-  if (s === 'PAID') return {
-    heading: 'PAYMENT\nRECEIVED!',
-    subheading: "You're all set. We're getting your snacks ready!",
-    badge: '🎉', badgeBg: 'bg-white',
-    icon: 'payments', iconClass: 'text-blue-500 animate-pulse',
-    statusText: 'Payment confirmed — preparing order',
-    showDelivery: false,
-  };
   if (s === 'PROCESSING') return {
     heading: 'ORDER\nPLACED!',
     subheading: "You have excellent taste. We'll notify you when it ships!",
@@ -114,7 +106,7 @@ export function OrderConfirmedPage() {
   const items = order.items ?? [];
   const cfg = getStatusConfig(order.status);
   const isCancelled = order.status.toUpperCase() === 'CANCELLED';
-  const isPaid = Boolean(order.razorpayPaymentId);
+  const isPaid = order.razorpayPaymentStatus === 'captured';
   const shippingAddress = {
     name: order.shippingName,
     line1: order.shippingLine1,
@@ -205,7 +197,7 @@ export function OrderConfirmedPage() {
               </address>
               <div className="mt-6 p-3 bg-background-light border-2 border-text-chocolate rounded transform rotate-1">
                 <p className="text-xs font-bold text-text-chocolate/70 uppercase mb-1">Status</p>
-                {isPaid && order.status.toUpperCase() !== 'PAID' && (
+                {isPaid && (
                   <div className="flex items-center gap-2 font-bold text-green-600 mb-2">
                     <span className="material-symbols-outlined text-lg">check_circle</span>
                     <span>Payment received</span>

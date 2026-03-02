@@ -22,7 +22,7 @@ export interface SavedAddress {
   isDefault: boolean;
 }
 
-export type OrderStatus = 'processing' | 'delivered' | 'cancelled' | 'pending' | 'paid' | 'shipped' | 'out_for_delivery';
+export type OrderStatus = 'processing' | 'delivered' | 'cancelled' | 'pending' | 'shipped' | 'out_for_delivery';
 
 export interface AccountOrder {
   id: string;

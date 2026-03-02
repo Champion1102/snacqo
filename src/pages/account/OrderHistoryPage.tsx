@@ -27,7 +27,6 @@ function mapStatus(backendStatus: string): OrderStatus {
   const s = (backendStatus || '').toUpperCase();
   if (s === 'DELIVERED') return 'delivered';
   if (s === 'CANCELLED') return 'cancelled';
-  if (s === 'PAID') return 'paid';
   if (s === 'OUT_FOR_DELIVERY') return 'out_for_delivery';
   if (s === 'SHIPPED') return 'shipped';
   if (s === 'PENDING') return 'pending';
@@ -37,7 +36,6 @@ function mapStatus(backendStatus: string): OrderStatus {
 
 const STATUS_LABEL: Record<OrderStatus, string> = {
   pending: 'Pending',
-  paid: 'Paid',
   processing: 'Processing',
   shipped: 'Shipped',
   out_for_delivery: 'Out for delivery',
@@ -47,7 +45,6 @@ const STATUS_LABEL: Record<OrderStatus, string> = {
 
 const STATUS_STYLE: Record<OrderStatus, string> = {
   pending: 'bg-yellow-100 text-yellow-800',
-  paid: 'bg-blue-100 text-blue-800',
   processing: 'bg-accent-mango text-text-chocolate',
   shipped: 'bg-sky-100 text-sky-800',
   out_for_delivery: 'bg-sky-200 text-sky-900',
@@ -147,7 +144,7 @@ export function OrderHistoryPage() {
 
       {/* Filter pills: horizontal scroll on mobile, wrap on desktop */}
       <div className="flex gap-2 md:flex-wrap md:gap-4 mb-6 md:mb-10 overflow-x-auto scrollbar-hide pb-2 -mx-1 px-1 relative z-10">
-        {(['all', 'pending', 'paid', 'processing', 'shipped', 'out_for_delivery', 'delivered', 'cancelled'] as const).map((f) => (
+        {(['all', 'pending', 'processing', 'shipped', 'out_for_delivery', 'delivered', 'cancelled'] as const).map((f) => (
           <button
             key={f}
             type="button"
