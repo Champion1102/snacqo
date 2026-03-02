@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { sendOtp, verifyOtp } from '@/api/auth';
+
+const RESEND_COOLDOWN_SECONDS = 60;
 
 export function SignUpPage() {
   const navigate = useNavigate();
@@ -14,6 +16,13 @@ export function SignUpPage() {
   const [sending, setSending] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [error, setError] = useState('');
+  const [resendCooldown, setResendCooldown] = useState(0);
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const t = setInterval(() => setResendCooldown((c) => (c <= 1 ? 0 : c - 1)), 1000);
+    return () => clearInterval(t);
+  }, [resendCooldown]);
 
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,6 +39,7 @@ export function SignUpPage() {
     try {
       await sendOtp(email.trim(), 'signup');
       setOtpSent(true);
+      setResendCooldown(RESEND_COOLDOWN_SECONDS);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to send code. Please try again.');
     } finally {
@@ -67,6 +77,7 @@ export function SignUpPage() {
     setSending(true);
     try {
       await sendOtp(email.trim(), 'signup');
+      setResendCooldown(RESEND_COOLDOWN_SECONDS);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to resend.');
     } finally {
@@ -221,10 +232,10 @@ export function SignUpPage() {
                   <button
                     type="button"
                     onClick={handleResend}
-                    disabled={sending}
-                    className="flex-1 py-3 bg-white text-text-chocolate font-bold border-[3px] border-text-chocolate rounded-sm hover:bg-secondary transition-colors uppercase text-sm font-product disabled:opacity-70"
+                    disabled={sending || resendCooldown > 0}
+                    className="flex-1 py-3 bg-white text-text-chocolate font-bold border-[3px] border-text-chocolate rounded-sm hover:bg-secondary transition-colors uppercase text-sm font-product disabled:opacity-70 disabled:cursor-not-allowed"
                   >
-                    Resend
+                    {resendCooldown > 0 ? `Resend in 0:${String(resendCooldown).padStart(2, '0')}` : 'Resend'}
                   </button>
                   <button
                     type="submit"

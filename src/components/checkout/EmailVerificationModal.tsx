@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { sendOtp, verifyOtp } from '@/api/auth';
 import { useAuth } from '@/contexts/AuthContext';
+
+const RESEND_COOLDOWN_SECONDS = 60;
 
 interface EmailVerificationModalProps {
   email: string;
@@ -18,6 +20,13 @@ export function EmailVerificationModal({ email, firstName, lastName, onVerify, o
   const [sending, setSending] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [error, setError] = useState('');
+  const [resendCooldown, setResendCooldown] = useState(0);
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const t = setInterval(() => setResendCooldown((c) => (c <= 1 ? 0 : c - 1)), 1000);
+    return () => clearInterval(t);
+  }, [resendCooldown]);
 
   const handleSendOtp = async () => {
     setError('');
@@ -25,6 +34,7 @@ export function EmailVerificationModal({ email, firstName, lastName, onVerify, o
     try {
       await sendOtp(email.trim());
       setOtpSent(true);
+      setResendCooldown(RESEND_COOLDOWN_SECONDS);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to send code. Please try again.');
     } finally {
@@ -135,10 +145,10 @@ export function EmailVerificationModal({ email, firstName, lastName, onVerify, o
               <button
                 type="button"
                 onClick={handleSendOtp}
-                disabled={sending}
-                className="flex-1 py-3 bg-white text-text-chocolate font-bold border-2 border-text-chocolate hover:bg-secondary transition-colors uppercase tracking-wider text-sm btn-text disabled:opacity-70"
+                disabled={sending || resendCooldown > 0}
+                className="flex-1 py-3 bg-white text-text-chocolate font-bold border-2 border-text-chocolate hover:bg-secondary transition-colors uppercase tracking-wider text-sm btn-text disabled:opacity-70 disabled:cursor-not-allowed"
               >
-                Resend
+                {resendCooldown > 0 ? `Resend in 0:${String(resendCooldown).padStart(2, '0')}` : 'Resend'}
               </button>
               <button
                 type="button"
