@@ -145,6 +145,15 @@ export function CartPage() {
         favorite
       </span>
 
+      {/* Mobile: Back to shop */}
+      <Link
+        to="/shop"
+        className="md:hidden flex items-center gap-2 text-text-chocolate font-bold text-sm mb-4 w-fit hover:text-primary transition-colors"
+      >
+        <span className="material-symbols-outlined text-xl">arrow_back</span>
+        Back to shop
+      </Link>
+
       {/* Header: mobile = clean "YOUR STASH", desktop = existing */}
       <div className="mb-6 md:mb-10 relative">
         <h1 className="text-3xl sm:text-5xl md:text-6xl text-text-chocolate brand-font uppercase leading-none text-center sm:text-left">

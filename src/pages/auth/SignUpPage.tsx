@@ -52,7 +52,7 @@ export function SignUpPage() {
         firstName: firstName.trim() || undefined,
         lastName: lastName.trim() || undefined,
       });
-      setAuth({ user: res.user, token: res.token });
+      setAuth({ user: res.user });
       navigate('/shop');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Invalid or expired code.');

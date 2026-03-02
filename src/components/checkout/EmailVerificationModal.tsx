@@ -46,7 +46,7 @@ export function EmailVerificationModal({ email, firstName, lastName, onVerify, o
         ...(firstName !== undefined && { firstName: firstName.trim() }),
         ...(lastName !== undefined && { lastName: lastName.trim() }),
       });
-      setAuth({ user: res.user, token: res.token });
+      setAuth({ user: res.user });
       onVerify();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Invalid or expired code. Try again.');

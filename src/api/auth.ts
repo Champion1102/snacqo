@@ -1,6 +1,4 @@
-import { request, setToken } from './client';
-
-export { setToken } from './client';
+import { request } from './client';
 
 export interface AuthUser {
   id: string;
@@ -13,7 +11,6 @@ export interface AuthUser {
 
 export interface VerifyOtpResponse {
   user: AuthUser;
-  token: string;
 }
 
 /** intent: 'login' = only send if user exists; 'signup' = only send if user does not exist */
@@ -39,9 +36,6 @@ export function verifyOtp(params: {
       ...(firstName !== undefined && { firstName }),
       ...(lastName !== undefined && { lastName }),
     },
-  }).then((res) => {
-    setToken(res.token);
-    return res;
   });
 }
 
@@ -49,6 +43,7 @@ export function getMe(): Promise<{ user: AuthUser }> {
   return request('/auth/me');
 }
 
-export function clearAuthToken(): void {
-  setToken(null);
+/** Clear session (HttpOnly cookie) on the server. */
+export function logout(): Promise<void> {
+  return request('/auth/logout', { method: 'POST' }).then(() => undefined);
 }

@@ -1,5 +1,4 @@
 import { Link } from 'react-router-dom';
-import { Logo } from '@/components/Logo';
 
 type CheckoutStep = 'cart' | 'shipping' | 'payment';
 
@@ -18,7 +17,7 @@ export function CheckoutHeader({ step }: CheckoutHeaderProps) {
     <header className="w-full z-40 px-6 py-6 border-b-2 border-text-chocolate bg-white relative">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2">
-          <Logo size="sm" />
+          <img src="/logo1.svg" alt="Snacqo" className="h-8 w-auto object-contain" />
         </Link>
         <nav className="hidden md:flex items-center gap-2 text-sm font-extrabold uppercase tracking-widest text-text-chocolate/50">
           {STEPS.map((s, i) => (

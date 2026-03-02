@@ -35,13 +35,15 @@ function getStandardShippingPaise(subtotalPaise: number): number {
 function mapToCheckoutItem(item: CartItemResponse): CheckoutOrderItem {
   const v = item.variant;
   const product = v?.product;
+  const pricePaise = v?.price ?? 0;
   return {
     id: item.id,
     name: product?.name ?? '',
     variant: v?.name ?? '',
     imageUrl: product?.images?.[0]?.url ?? '',
     quantity: item.quantity,
-    price: formatPrice(v?.price ?? 0),
+    price: formatPrice(pricePaise),
+    pricePaise,
   };
 }
 

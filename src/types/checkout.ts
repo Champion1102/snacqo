@@ -17,6 +17,8 @@ export interface CheckoutOrderItem {
   imageUrl: string;
   quantity: number;
   price: string;
+  /** Unit price in paise (for showing quantity × price = line total) */
+  pricePaise?: number;
 }
 
 export interface OrderConfirmed {

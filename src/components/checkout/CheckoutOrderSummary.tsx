@@ -82,7 +82,15 @@ export function CheckoutOrderSummary({
                 <p className="text-sm text-text-chocolate/70 font-bold">{item.variant}</p>
               </div>
               <div className="text-right flex-shrink-0">
-                <span className="font-black text-lg">{item.price}</span>
+                <div className="font-black text-lg">
+                  {item.price}
+                  <span className="text-text-chocolate/80 font-bold text-base ml-1">× {item.quantity}</span>
+                </div>
+                {item.pricePaise != null && item.quantity > 0 && (
+                  <div className="text-sm font-bold text-primary mt-0.5">
+                    = ₹{((item.pricePaise * item.quantity) / 100).toFixed(2)}
+                  </div>
+                )}
               </div>
             </div>
           ))}

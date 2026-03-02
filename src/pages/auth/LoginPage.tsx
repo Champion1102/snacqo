@@ -41,7 +41,7 @@ export function LoginPage() {
     setVerifying(true);
     try {
       const res = await verifyOtp({ email: email.trim(), otp });
-      setAuth({ user: res.user, token: res.token });
+      setAuth({ user: res.user });
       navigate('/shop');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Invalid or expired code.');

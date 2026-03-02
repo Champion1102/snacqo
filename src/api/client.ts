@@ -1,15 +1,5 @@
 const BASE_URL = import.meta.env.VITE_API_URL ?? '';
 
-let token: string | null = null;
-
-export function getToken(): string | null {
-  return token;
-}
-
-export function setToken(t: string | null): void {
-  token = t;
-}
-
 export type RequestOptions = Omit<RequestInit, 'body'> & { body?: object };
 
 export async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
@@ -19,9 +9,6 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
     'Content-Type': 'application/json',
     ...(rest.headers as Record<string, string>),
   };
-  if (token) {
-    (headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
-  }
 
   const res = await fetch(url, {
     ...rest,
@@ -43,10 +30,6 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
 /** Request with FormData (e.g. file uploads). Do not set Content-Type; browser sets multipart boundary. */
 export async function requestFormData<T>(path: string, formData: FormData, method = 'POST'): Promise<T> {
   const url = path.startsWith('http') ? path : `${BASE_URL.replace(/\/$/, '')}${path}`;
-  const headers: HeadersInit = {};
-  if (token) {
-    (headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
-  }
 
   const res = await fetch(url, {
     method,
