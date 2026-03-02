@@ -144,6 +144,10 @@ export function CheckoutOrderSummary({
             <span>Shipping</span>
             <span>{shippingAmount ?? '—'}</span>
           </div>
+          <p className="flex items-center gap-2 text-sm font-bold text-primary mt-1">
+            <span className="material-symbols-outlined text-base">local_shipping</span>
+            {shippingAmount === 'Free' ? "You've got free delivery!" : 'Free delivery on orders above ₹499'}
+          </p>
         </div>
         <div className="flex justify-between items-center mt-6 pt-6 border-t-2 border-text-chocolate">
           <span className="brand-font text-2xl">Total</span>

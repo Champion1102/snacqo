@@ -1,5 +1,4 @@
 import { Link } from 'react-router-dom';
-import { Logo } from './Logo';
 
 export function Footer() {
   return (
@@ -13,7 +12,10 @@ export function Footer() {
       <div className="max-w-7xl mx-auto px-6 relative z-10">
         <div className="flex flex-col md:flex-row justify-between items-start gap-12 mb-12">
           <Link to="/" className="flex items-center gap-2">
-            <Logo size="md" />
+            <span className="relative inline-block">
+              <span className="absolute -top-0.5 right-0 text-text-chocolate font-bold text-[0.4em] leading-none select-none">™</span>
+              <img src="/logo1.svg" alt="Snacqo" className="h-20 w-auto object-contain" />
+            </span>
           </Link>
           <div className="flex flex-col md:flex-row gap-8 md:gap-16">
             <div>

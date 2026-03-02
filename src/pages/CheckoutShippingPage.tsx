@@ -20,8 +20,17 @@ function formatPrice(paise: number): string {
   return `₹${(paise / 100).toFixed(2)}`;
 }
 
-// Must match backend DEFAULT_SHIPPING_PAISE (flat rate in paise)
-const SHIPPING_PAISE = 5000; // ₹50
+// Must match backend tiered shipping (paise): <₹200 → ₹50, ₹200–₹498 → ₹100, ≥₹499 → free
+const FREE_SHIPPING_THRESHOLD_PAISE = 49_900;   // ₹499
+const SHIPPING_LOW_THRESHOLD_PAISE = 20_000;   // ₹200
+const SHIPPING_BELOW_200_PAISE = 5_000;        // ₹50
+const SHIPPING_200_TO_499_PAISE = 10_000;      // ₹100
+
+function getStandardShippingPaise(subtotalPaise: number): number {
+  if (subtotalPaise >= FREE_SHIPPING_THRESHOLD_PAISE) return 0;
+  if (subtotalPaise < SHIPPING_LOW_THRESHOLD_PAISE) return SHIPPING_BELOW_200_PAISE;
+  return SHIPPING_200_TO_499_PAISE;
+}
 
 function mapToCheckoutItem(item: CartItemResponse): CheckoutOrderItem {
   const v = item.variant;
@@ -230,12 +239,12 @@ export function CheckoutShippingPage() {
   const isCampusDelivery = deliveryType === 'campus' && !!selectedCampusId;
   const discountPaise = appliedCoupons.reduce((sum, c) => sum + c.discountAmount, 0);
   const freeShipping = appliedCoupons.some((c) => c.freeShipping);
-  const shippingPaise = freeShipping || isCampusDelivery ? 0 : SHIPPING_PAISE;
+  const shippingPaise = freeShipping || isCampusDelivery ? 0 : getStandardShippingPaise(subtotalPaise);
   const subtotalStr = formatPrice(subtotalPaise);
   const totalPaise = Math.max(0, subtotalPaise - discountPaise + shippingPaise);
   const totalStr = formatPrice(totalPaise);
   const discountStr = discountPaise > 0 ? formatPrice(discountPaise) : undefined;
-  const shippingStr = freeShipping || isCampusDelivery ? 'Free' : formatPrice(SHIPPING_PAISE);
+  const shippingStr = freeShipping || isCampusDelivery ? 'Free' : formatPrice(getStandardShippingPaise(subtotalPaise));
 
   const handleApplyCoupon = async (code: string) => {
     setCouponMessage(null);

@@ -32,6 +32,10 @@ export function CartOrderSummary({ summary }: CartOrderSummaryProps) {
             <span className="product-font font-bold text-text-chocolate">{summary.tax}</span>
           </div>
         </div>
+        <p className="flex items-center gap-2 text-sm font-bold text-primary mb-4">
+          <span className="material-symbols-outlined text-base">local_shipping</span>
+          Free delivery on orders above ₹499
+        </p>
         <div className="border-t-2 border-dashed border-text-chocolate/30 pt-4 mb-6 sm:mb-8">
           <div className="flex justify-between items-end gap-2">
             <span className="brand-font text-base sm:text-xl text-text-chocolate font-bold shrink-0">Total</span>

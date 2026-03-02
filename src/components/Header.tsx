@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Logo } from './Logo';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 
@@ -47,10 +46,10 @@ export function Header({ sticky = false }: { sticky?: boolean }) {
     <header
       className={`fixed left-0 w-full z-40 transition-all duration-300 bg-white/80 backdrop-blur-md border-b-2 border-text-chocolate ${sticky ? 'top-0' : 'top-9'}`}
     >
-      <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-4 md:px-6 py-2.5 md:py-4 flex items-center justify-between min-h-[3.25rem] md:min-h-[8rem]">
         <Link
           to="/"
-          className="flex items-center gap-2"
+          className="flex items-center gap-2 shrink-0"
           onClick={() => {
             close();
             if (pathname === '/') {
@@ -58,7 +57,14 @@ export function Header({ sticky = false }: { sticky?: boolean }) {
             }
           }}
         >
-          <Logo size="sm" />
+          <motion.span
+            className="relative inline-block"
+            whileHover={{ scale: 1.05, rotate: 4 }}
+            transition={{ duration: 0.25, ease: 'easeOut' }}
+          >
+            <span className="absolute -top-0.5 right-0 text-text-chocolate font-bold text-[0.4em] leading-none select-none">™</span>
+            <img src="/logo1.svg" alt="Snacqo" className="h-10 md:h-20 w-auto min-w-[3.5rem] md:min-w-[6.5rem] object-contain" />
+          </motion.span>
         </Link>
 
         {/* Desktop nav */}
