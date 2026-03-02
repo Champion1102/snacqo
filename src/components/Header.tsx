@@ -2,25 +2,17 @@ import { useState } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
-import { useCart } from '@/contexts/CartContext';
 
-const HOME_NAV = [
+const NAV_LINKS = [
   { label: 'Flavors', href: '/#flavors' },
   { label: 'The Vibe', href: '/#vibe' },
-  { label: 'About us', href: '/about' },
   { label: 'Contact us', href: '/#contact' },
-];
-
-const FULL_NAV = [
-  { label: 'Shop All', href: '/shop' },
-  { label: 'About us', href: '/about' },
 ];
 
 export function Header({ sticky = false }: { sticky?: boolean }) {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const { isLoggedIn, userName, logout } = useAuth();
-  const { cartCount } = useCart();
   const [menuOpen, setMenuOpen] = useState(false);
 
   const handleLogout = () => {
@@ -28,8 +20,7 @@ export function Header({ sticky = false }: { sticky?: boolean }) {
     navigate('/');
     close();
   };
-  const isHomepage = pathname === '/';
-  const navLinks = isHomepage ? HOME_NAV : FULL_NAV;
+  const navLinks = NAV_LINKS;
 
   const close = () => setMenuOpen(false);
 
@@ -41,6 +32,8 @@ export function Header({ sticky = false }: { sticky?: boolean }) {
       {label}
     </motion.span>
   );
+
+  const isRouteLink = (href: string) => href === '/shop' || href === '/account';
 
   return (
     <header
@@ -70,7 +63,7 @@ export function Header({ sticky = false }: { sticky?: boolean }) {
         {/* Desktop nav */}
         <nav className="hidden md:flex items-center gap-8">
           {navLinks.map(({ label, href }) => {
-            const isRoute = href === '/shop' || href === '/account';
+            const isRoute = isRouteLink(href);
             return isRoute ? (
               <NavLink key={href} to={href} end={href === '/shop'}>
                 {({ isActive }) => (
@@ -93,91 +86,37 @@ export function Header({ sticky = false }: { sticky?: boolean }) {
         </nav>
 
         <div className="flex items-center gap-4">
-          {isHomepage ? (
+          {isLoggedIn ? (
             <>
-              {isLoggedIn ? (
-                <Link
-                  to="/account"
-                  className="hidden sm:flex items-center gap-2 font-bold text-text-chocolate hover:text-primary transition-colors"
-                >
-                  <span className="w-8 h-8 rounded-full bg-accent-mango border-2 border-text-chocolate flex items-center justify-center">
-                    <span className="material-symbols-outlined text-sm">person</span>
-                  </span>
-                  <span>Hi, {userName || 'Snacker'}!</span>
-                </Link>
-              ) : (
-                <Link
-                  to="/login"
-                  className="hidden sm:block text-sm font-black uppercase tracking-wide text-text-chocolate hover:text-primary transition-colors"
-                >
-                  Log in
-                </Link>
-              )}
-              <Link to="/shop">
-                <motion.span
-                  className="hidden sm:flex bg-accent-mango text-text-chocolate px-6 py-2.5 rounded-none border-2 border-text-chocolate text-sm font-black uppercase shadow-sticker-sm cursor-pointer"
-                  whileHover={{ backgroundColor: '#FF6B6B', color: 'white', rotate: -3, scale: 1.1 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  Shop All
-                </motion.span>
-              </Link>
-            </>
-          ) : (
-            <>
-              {isLoggedIn ? (
-                <>
-                  <NavLink
-                    to="/account/orders"
-                    className={({ isActive }) =>
-                      `hidden sm:flex items-center gap-1.5 text-sm font-black uppercase tracking-wide transition-colors ${isActive ? 'text-primary' : 'text-text-chocolate hover:text-primary'}`
-                    }
-                  >
-                    <span className="material-symbols-outlined text-base">receipt_long</span>
-                    My Orders
-                  </NavLink>
-                  <Link
-                    to="/account"
-                    className="hidden sm:flex items-center gap-2 font-bold text-text-chocolate hover:text-primary transition-colors"
-                  >
-                    <span className="w-8 h-8 rounded-full bg-accent-mango border-2 border-text-chocolate flex items-center justify-center">
-                      <span className="material-symbols-outlined text-sm">person</span>
-                    </span>
-                    <span>Hi, {userName || 'Snacker'}!</span>
-                  </Link>
-                </>
-              ) : (
-                <Link
-                  to="/login"
-                  className="hidden sm:block text-sm font-black uppercase tracking-wide text-text-chocolate hover:text-primary transition-colors"
-                >
-                  Log in
-                </Link>
-              )}
-              <Link to="/cart" className="relative inline-block">
-                <motion.span
-                  className="hidden sm:inline-flex relative bg-accent-mango text-text-chocolate px-6 py-2.5 rounded-none border-2 border-text-chocolate text-sm font-black uppercase shadow-sticker-sm cursor-pointer"
-                  whileHover={{ backgroundColor: '#FF6B6B', color: 'white', rotate: -3, scale: 1.05 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  My Cart
-                  {cartCount > 0 && (
-                    <span className="absolute -top-1 -right-1 min-w-[1.25rem] h-5 px-1 bg-accent-mango border-2 border-text-chocolate rounded-full text-xs font-bold flex items-center justify-center animate-bounce">
-                      {cartCount > 99 ? '99+' : cartCount}
-                    </span>
-                  )}
-                </motion.span>
-                <span className="sm:hidden relative inline-flex bg-accent-mango text-text-chocolate px-4 py-2 rounded-none border-2 border-text-chocolate text-sm font-black uppercase shadow-sticker-sm">
-                  My Cart
-                  {cartCount > 0 && (
-                    <span className="absolute -top-1 -right-1 min-w-[1.25rem] h-5 px-1 bg-accent-mango border-2 border-text-chocolate rounded-full text-xs font-bold flex items-center justify-center animate-bounce">
-                      {cartCount > 99 ? '99+' : cartCount}
-                    </span>
-                  )}
+              <NavLink
+                to="/account/orders"
+                className={({ isActive }) =>
+                  `hidden sm:flex items-center gap-1.5 text-sm font-black uppercase tracking-wide transition-colors ${isActive ? 'text-primary' : 'text-text-chocolate hover:text-primary'}`
+                }
+              >
+                <span className="material-symbols-outlined text-base">receipt_long</span>
+                My Orders
+              </NavLink>
+              <Link
+                to="/account"
+                className="hidden sm:flex items-center gap-2 font-bold text-text-chocolate hover:text-primary transition-colors"
+              >
+                <span className="w-8 h-8 rounded-full bg-accent-mango border-2 border-text-chocolate flex items-center justify-center">
+                  <span className="material-symbols-outlined text-sm">person</span>
                 </span>
+                <span>Hi, {userName || 'Snacker'}!</span>
               </Link>
             </>
-          )}
+          ) : null}
+          <Link to="/#contact" className="relative inline-block">
+            <motion.span
+              className="hidden sm:flex bg-accent-mango text-text-chocolate px-6 py-2.5 rounded-none border-2 border-text-chocolate text-sm font-black uppercase shadow-sticker-sm cursor-pointer"
+              whileHover={{ backgroundColor: '#FF6B6B', color: 'white', rotate: -3, scale: 1.1 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              Join Us
+            </motion.span>
+          </Link>
 
           {/* Mobile: hamburger + account icon side by side */}
           <div className="md:hidden flex items-center gap-2">
@@ -191,13 +130,15 @@ export function Header({ sticky = false }: { sticky?: boolean }) {
                 {menuOpen ? 'close' : 'menu'}
               </span>
             </button>
-            <Link
-              to={isLoggedIn ? '/account' : '/login'}
-              className="text-text-chocolate p-2 border-2 border-text-chocolate bg-white shadow-[2px_2px_0px_0px_#2D1B0E] hover:bg-secondary transition-colors"
-              aria-label={isLoggedIn ? 'Account' : 'Log in'}
-            >
-              <span className="material-symbols-outlined font-black">person</span>
-            </Link>
+            {isLoggedIn && (
+              <Link
+                to="/account"
+                className="text-text-chocolate p-2 border-2 border-text-chocolate bg-white shadow-[2px_2px_0px_0px_#2D1B0E] hover:bg-secondary transition-colors"
+                aria-label="Account"
+              >
+                <span className="material-symbols-outlined font-black">person</span>
+              </Link>
+            )}
           </div>
         </div>
       </div>
@@ -223,96 +164,41 @@ export function Header({ sticky = false }: { sticky?: boolean }) {
                 {label}
               </Link>
             ))}
-            {isHomepage ? (
+            {isLoggedIn ? (
               <>
-                {isLoggedIn ? (
-                  <>
-                    <Link
-                      to="/account"
-                      onClick={close}
-                      className="text-lg font-black uppercase tracking-wide text-text-chocolate hover:text-primary transition-colors flex items-center gap-2"
-                    >
-                      <span className="material-symbols-outlined">person</span>
-                      Hi, {userName || 'Snacker'}!
-                    </Link>
-                    <button
-                      type="button"
-                      onClick={handleLogout}
-                      className="text-lg font-black uppercase tracking-wide text-text-chocolate hover:text-primary transition-colors flex items-center gap-2 text-left"
-                    >
-                      <span className="material-symbols-outlined">logout</span>
-                      Log out
-                    </button>
-                  </>
-                ) : (
-                  <Link
-                    to="/login"
-                    onClick={close}
-                    className="text-lg font-black uppercase tracking-wide text-text-chocolate hover:text-primary transition-colors"
-                  >
-                    Log in
-                  </Link>
-                )}
                 <Link
-                  to="/shop"
+                  to="/account/orders"
                   onClick={close}
-                  className="mt-2 inline-block bg-accent-mango text-text-chocolate px-6 py-3 border-2 border-text-chocolate text-sm font-black uppercase shadow-sticker-sm text-center"
+                  className="text-lg font-black uppercase tracking-wide text-text-chocolate hover:text-primary transition-colors flex items-center gap-2"
                 >
-                  Shop All
+                  <span className="material-symbols-outlined">receipt_long</span>
+                  My Orders
                 </Link>
-              </>
-            ) : (
-              <>
-                {isLoggedIn ? (
-                  <>
-                    <Link
-                      to="/account/orders"
-                      onClick={close}
-                      className="text-lg font-black uppercase tracking-wide text-text-chocolate hover:text-primary transition-colors flex items-center gap-2"
-                    >
-                      <span className="material-symbols-outlined">receipt_long</span>
-                      My Orders
-                    </Link>
-                    <Link
-                      to="/account"
-                      onClick={close}
-                      className="text-lg font-black uppercase tracking-wide text-text-chocolate hover:text-primary transition-colors flex items-center gap-2"
-                    >
-                      <span className="material-symbols-outlined">person</span>
-                      Hi, {userName || 'Snacker'}!
-                    </Link>
-                    <button
-                      type="button"
-                      onClick={handleLogout}
-                      className="text-lg font-black uppercase tracking-wide text-text-chocolate hover:text-primary transition-colors flex items-center gap-2 text-left"
-                    >
-                      <span className="material-symbols-outlined">logout</span>
-                      Log out
-                    </button>
-                  </>
-                ) : (
-                  <Link
-                    to="/login"
-                    onClick={close}
-                    className="text-lg font-black uppercase tracking-wide text-text-chocolate hover:text-primary transition-colors"
-                  >
-                    Log in
-                  </Link>
-                )}
                 <Link
-                  to="/cart"
+                  to="/account"
                   onClick={close}
-                  className="mt-2 relative inline-flex bg-accent-mango text-text-chocolate px-6 py-3 border-2 border-text-chocolate text-sm font-black uppercase shadow-sticker-sm text-center"
+                  className="text-lg font-black uppercase tracking-wide text-text-chocolate hover:text-primary transition-colors flex items-center gap-2"
                 >
-                  My Cart
-                  {cartCount > 0 && (
-                    <span className="absolute -top-1 -right-1 min-w-[1.25rem] h-5 px-1 bg-accent-mango border-2 border-text-chocolate rounded-full text-xs font-bold flex items-center justify-center animate-bounce">
-                      {cartCount > 99 ? '99+' : cartCount}
-                    </span>
-                  )}
+                  <span className="material-symbols-outlined">person</span>
+                  Hi, {userName || 'Snacker'}!
                 </Link>
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="text-lg font-black uppercase tracking-wide text-text-chocolate hover:text-primary transition-colors flex items-center gap-2 text-left"
+                >
+                  <span className="material-symbols-outlined">logout</span>
+                  Log out
+                </button>
               </>
-            )}
+            ) : null}
+            <Link
+              to="/#contact"
+              onClick={close}
+              className="mt-2 inline-block bg-accent-mango text-text-chocolate px-6 py-3 border-2 border-text-chocolate text-sm font-black uppercase shadow-sticker-sm text-center"
+            >
+              Join Us
+            </Link>
           </motion.div>
         )}
       </AnimatePresence>
