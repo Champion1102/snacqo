@@ -108,7 +108,7 @@ export function ReturnRefundPolicy() {
           </p>
           <p className="mt-3">
             To request cancellation, contact us immediately at{' '}
-            <a href="mailto:snacqo@gmail.com" className="text-primary hover:underline">snacqo@gmail.com</a>
+            <a href="mailto:support@snacqo.com" className="text-primary hover:underline">support@snacqo.com</a>
             {' '}or 8809515069.
           </p>
         </section>
@@ -138,8 +138,8 @@ export function ReturnRefundPolicy() {
             <p>Phone: 8809515069</p>
             <p>
               Email:{' '}
-              <a href="mailto:snacqo@gmail.com" className="text-primary hover:underline">
-                snacqo@gmail.com
+              <a href="mailto:support@snacqo.com" className="text-primary hover:underline">
+                support@snacqo.com
               </a>
             </p>
           </address>

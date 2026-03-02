@@ -544,8 +544,8 @@ export function TermsAndConditions() {
             <p>India</p>
             <p>
               Email:{' '}
-              <a href="mailto:snacqo@gmail.com" className="text-primary hover:underline">
-                snacqo@gmail.com
+              <a href="mailto:support@snacqo.com" className="text-primary hover:underline">
+                support@snacqo.com
               </a>
             </p>
             <p>Phone: 8809515069</p>

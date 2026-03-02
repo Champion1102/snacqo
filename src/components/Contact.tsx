@@ -63,13 +63,13 @@ export function Contact() {
             className="text-5xl md:text-7xl font-black text-white mb-6 brand-font uppercase tracking-tight"
             style={{ textShadow: '4px 4px 0px #2D1B0E' }}
           >
-            Get first dibs.
+            Join The Snac Club
           </h2>
           <p
             className="text-white text-xl md:text-2xl font-bold mb-10 max-w-lg mx-auto leading-tight"
             style={{ textShadow: '1px 1px 0px #2D1B0E' }}
           >
-            Don&apos;t be the last one snacking. Join the list for early access + exclusive drops.
+            Get 10% off on your first order + exclusive drops.
           </p>
 
           {status === 'success' ? (
@@ -84,19 +84,24 @@ export function Contact() {
               className="flex flex-col md:flex-row gap-4 max-w-lg mx-auto relative"
               onSubmit={handleSubmit}
             >
-              <span className="absolute -top-8 -left-8 hand-font text-white text-xl rotate-[-12deg] hidden md:block">
-                Valid email only pls!
-              </span>
-              <input
-                type="email"
-                name="email"
-                placeholder="Enter your email..."
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="flex-1 px-6 py-5 rounded-none border-4 border-text-chocolate bg-white placeholder-text-chocolate/40 text-text-chocolate font-bold text-lg focus:outline-none focus:ring-0 focus:border-text-chocolate focus:shadow-sticker-sm transition-all"
-                required
-                disabled={status === 'loading'}
-              />
+              <div className="flex-1 relative flex items-center">
+                <span
+                  className="absolute left-4 text-text-chocolate/50 pointer-events-none"
+                  aria-hidden
+                >
+                  <span className="material-symbols-outlined text-2xl">mail</span>
+                </span>
+                <input
+                  type="email"
+                  name="email"
+                  placeholder="Enter your email..."
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full pl-14 pr-6 py-5 rounded-none border-4 border-text-chocolate bg-white placeholder-text-chocolate/40 text-text-chocolate font-bold text-lg focus:outline-none focus:ring-0 focus:border-text-chocolate focus:shadow-sticker-sm transition-all"
+                  required
+                  disabled={status === 'loading'}
+                />
+              </div>
               <motion.button
                 type="submit"
                 disabled={status === 'loading'}

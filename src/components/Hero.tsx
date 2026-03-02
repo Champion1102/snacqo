@@ -1,11 +1,11 @@
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Logo } from './Logo';
-
-const ALMONDS_IMG = '/cashews&almonds.png';
+import { homepageImages } from '@/config/homepage-images';
 
 export function Hero() {
   return (
-    <section className="relative w-full px-6 py-12 md:py-20 lg:py-24 overflow-hidden">
+    <section className="relative w-full px-6 py-12 md:py-20 lg:py-24 overflow-hidden" id="about">
       {/* Blobs */}
       <motion.div
         className="absolute top-20 right-0 w-96 h-96 bg-secondary rounded-full mix-blend-multiply filter blur-3xl opacity-70"
@@ -36,7 +36,7 @@ export function Hero() {
       />
 
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center relative z-10">
-        <div className="flex flex-col gap-6 md:gap-8 order-2 lg:order-1 text-center lg:text-left relative">
+        <div className="flex flex-col gap-6 md:gap-8 order-2 lg:order-1 text-center lg:text-left relative min-w-0">
           <div className="absolute -top-12 left-20 hidden lg:block -rotate-12">
             <span className="hand-font text-text-chocolate text-lg rotate-6 block mb-1">
               It's pronounced "snack-o"
@@ -66,11 +66,11 @@ export function Hero() {
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-white border-2 border-text-chocolate shadow-sticker-sm mx-auto lg:mx-0 w-fit -rotate-2">
             <span className="w-3 h-3 rounded-full bg-accent-strawberry animate-ping" />
             <span className="text-xs font-black uppercase tracking-widest text-text-chocolate">
-              Dropping 2026
+              Now Shipping Nationwide
             </span>
           </div>
 
-          <h1 className="text-5xl md:text-7xl xl:text-8xl font-black leading-[0.85] tracking-tighter text-text-chocolate brand-font mt-2 relative">
+          <h1 className="text-5xl md:text-7xl xl:text-8xl font-black leading-[0.85] tracking-tighter text-text-chocolate font-product mt-2 relative">
             Snacks that <br />
             <span className="text-accent-strawberry relative inline-block">
               hit different.
@@ -95,19 +95,23 @@ export function Hero() {
           </p>
 
           <div className="flex flex-col sm:flex-row items-center gap-6 mt-6 justify-center lg:justify-start">
-            <motion.a
-              href="#contact"
-              className="w-full sm:w-auto px-10 py-5 bg-primary text-white font-black text-xl border-4 border-text-chocolate shadow-sticker hover:shadow-sticker-sm transition-all transform skew-x-[-5deg] text-center"
-              whileHover={{
-                x: 2,
-                y: 2,
-                boxShadow: '2px 2px 0px 0px #2D1B0E',
-                rotate: -1,
-              }}
-              whileTap={{ scale: 0.98 }}
+            <Link
+              to="/shop"
+              className="w-full sm:w-auto block sm:inline-block text-center"
             >
-              SHOP THE DROP
-            </motion.a>
+              <motion.span
+                className="inline-block w-full px-10 py-5 bg-primary text-white font-black text-xl border-4 border-text-chocolate shadow-sticker hover:shadow-sticker-sm transition-all transform skew-x-[-5deg] text-center"
+                whileHover={{
+                  x: 2,
+                  y: 2,
+                  boxShadow: '2px 2px 0px 0px #2D1B0E',
+                  rotate: -1,
+                }}
+                whileTap={{ scale: 0.98 }}
+              >
+                Shop all snacks
+              </motion.span>
+            </Link>
             <motion.a
               href="#flavors"
               className="w-full sm:w-auto px-8 py-5 bg-white text-text-chocolate font-black text-lg border-4 border-text-chocolate shadow-[6px_6px_0px_0px_#E0F7FA] flex items-center justify-center gap-2 transform rotate-1"
@@ -139,7 +143,7 @@ export function Hero() {
                 <img
                   alt="Close up of premium roasted almonds in a bowl"
                   className="w-full h-full object-cover grayscale-[0.2] contrast-125 hover:grayscale-0 transition-all duration-500"
-                  src={ALMONDS_IMG}
+                  src={homepageImages.heroAlmonds}
                 />
                 <div className="absolute inset-0 bg-gradient-to-tr from-accent-mango/20 to-transparent mix-blend-overlay pointer-events-none" />
               </div>

@@ -1,7 +1,5 @@
 import { motion } from 'framer-motion';
-
-const VIBECHECK_IMG = '/Vibecheckk.png';
-const SPICES_IMG = '/vib.png';
+import { homepageImages } from '@/config/homepage-images';
 
 export function VibeCheck() {
   return (
@@ -52,7 +50,7 @@ export function VibeCheck() {
               <img
                 alt="Vibe check - taste test approved"
                 className="w-full h-full object-cover object-top grayscale-[0.2] group-hover:grayscale-0 transition-all duration-500 border-2 border-text-chocolate/30"
-                src={VIBECHECK_IMG}
+                src={homepageImages.vibeCheck}
               />
               <div className="absolute bottom-6 left-4 right-4 md:right-8 bg-white border-2 border-text-chocolate p-4 rotate-[-2deg] shadow-sticker-sm max-w-sm">
                 <div className="flex items-center gap-2 mb-1">
@@ -122,7 +120,7 @@ export function VibeCheck() {
               <img
                 alt="Top down view of colorful spices and ingredients"
                 className="w-full h-full object-cover border-2 border-text-chocolate/30"
-                src={SPICES_IMG}
+                src={homepageImages.vib}
               />
               <div className="absolute bottom-3 right-3 bg-accent-strawberry text-white px-3 py-1.5 font-black text-sm border-2 border-text-chocolate rounded-md rotate-3 shadow-sticker-sm">
                 #SPICY

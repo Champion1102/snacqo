@@ -298,7 +298,7 @@ export function PrivacyPolicy() {
             <p>India</p>
             <p>Phone: 8809515069</p>
             <p>
-              Email: <a href="mailto:snacqo@gmail.com" className="text-primary hover:underline">snacqo@gmail.com</a>
+              Email: <a href="mailto:support@snacqo.com" className="text-primary hover:underline">support@snacqo.com</a>
             </p>
           </address>
         </section>

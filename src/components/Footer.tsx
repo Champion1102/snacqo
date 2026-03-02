@@ -5,7 +5,7 @@ export function Footer() {
   return (
     <footer className="bg-secondary pt-16 pb-8 border-t-4 border-text-chocolate relative overflow-hidden">
       <div className="absolute top-0 left-0 w-full h-full opacity-5 pointer-events-none flex flex-col justify-between z-0 overflow-hidden">
-        <span className="text-[10rem] font-black whitespace-nowrap leading-none text-text-chocolate select-none">
+        <span className="brand-font text-[10rem] font-black whitespace-nowrap leading-none text-text-chocolate select-none">
           SNACQO SNACQO SNACQO
         </span>
       </div>
@@ -17,7 +17,7 @@ export function Footer() {
           </Link>
           <div className="flex flex-col md:flex-row gap-8 md:gap-16">
             <div>
-              <h4 className="font-black text-text-chocolate uppercase tracking-widest mb-4 border-b-2 border-text-chocolate inline-block">
+              <h4 className="btn-text font-black text-text-chocolate uppercase tracking-widest mb-4 border-b-2 border-text-chocolate inline-block">
                 Socials
               </h4>
               <div className="flex flex-col gap-2">
@@ -42,7 +42,21 @@ export function Footer() {
               </div>
             </div>
             <div>
-              <h4 className="font-black text-text-chocolate uppercase tracking-widest mb-4 border-b-2 border-text-chocolate inline-block">
+              <h4 className="btn-text font-black text-text-chocolate uppercase tracking-widest mb-4 border-b-2 border-text-chocolate inline-block">
+                Support
+              </h4>
+              <div className="flex flex-col gap-2">
+                <a
+                  href="mailto:support@snacqo.com"
+                  className="text-text-chocolate font-bold hover:text-primary hover:translate-x-1 transition-all flex items-center gap-2"
+                >
+                  <span className="material-symbols-outlined text-lg">mail</span>
+                  support@snacqo.com
+                </a>
+              </div>
+            </div>
+            <div>
+              <h4 className="btn-text font-black text-text-chocolate uppercase tracking-widest mb-4 border-b-2 border-text-chocolate inline-block">
                 Legal Stuff
               </h4>
               <div className="flex flex-col gap-2">

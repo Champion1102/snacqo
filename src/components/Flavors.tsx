@@ -1,6 +1,24 @@
+import { useRef, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { homepageImages } from '@/config/homepage-images';
 
-const cards = [
+type FlavorCard = {
+  id: string;
+  tag: string;
+  title: string;
+  desc: string;
+  cta: string;
+  bgShadow: string;
+  cardBg: string;
+  btnClass: string;
+  icon: string;
+  image: string;
+  rotateClass: string;
+  tapeRotate: string;
+  bestSeller?: boolean;
+};
+
+const cards: FlavorCard[] = [
   {
     id: 'dark-choco-almond',
     tag: 'ALMONDS',
@@ -11,7 +29,7 @@ const cards = [
     cardBg: 'bg-secondary',
     btnClass: 'bg-secondary',
     icon: 'water_drop',
-    image: '/Flavors/darkchocolatealmonds.png',
+    image: homepageImages.flavors.darkchocolatealmonds,
     rotateClass: 'md:-rotate-2',
     tapeRotate: '0deg',
   },
@@ -25,7 +43,7 @@ const cards = [
     cardBg: 'bg-secondary',
     btnClass: 'bg-secondary',
     icon: 'coffee',
-    image: '/Flavors/doublechocomochaalmonds.png',
+    image: homepageImages.flavors.doublechocomochaalmonds,
     rotateClass: 'md:rotate-2',
     tapeRotate: '15deg',
     bestSeller: true,
@@ -40,7 +58,7 @@ const cards = [
     cardBg: 'bg-accent-mango/20',
     btnClass: 'bg-accent-mango',
     icon: 'emoji_events',
-    image: '/Flavors/kesarkulficashews.png',
+    image: homepageImages.flavors.kesarkulficashews,
     rotateClass: 'md:-rotate-1',
     tapeRotate: '-10deg',
   },
@@ -54,7 +72,7 @@ const cards = [
     cardBg: 'bg-accent-strawberry/20',
     btnClass: 'bg-accent-strawberry',
     icon: 'cake',
-    image: '/Flavors/strawberrycashews.png',
+    image: homepageImages.flavors.strawberrycashews,
     rotateClass: 'md:rotate-1',
     tapeRotate: '-8deg',
   },
@@ -68,7 +86,7 @@ const cards = [
     cardBg: 'bg-primary/10',
     btnClass: 'bg-primary text-white',
     icon: 'local_fire_department',
-    image: '/Flavors/pizzacashews.png',
+    image: homepageImages.flavors.pizzacashews,
     rotateClass: 'md:-rotate-2',
     tapeRotate: '5deg',
   },
@@ -82,13 +100,98 @@ const cards = [
     cardBg: 'bg-secondary',
     btnClass: 'bg-secondary',
     icon: 'redeem',
-    image: '/Flavors/chocolatealmonds.png',
+    image: homepageImages.flavors.chocolatealmonds,
     rotateClass: 'md:rotate-1',
     tapeRotate: '-5deg',
   },
 ];
 
+function FlavorCardContent({ card }: { card: FlavorCard }) {
+  return (
+    <>
+      <div
+        className={`absolute inset-0 ${card.bgShadow} translate-y-3 translate-x-3 w-full h-full`}
+      />
+      <div className="relative bg-white border-4 border-text-chocolate p-6 h-full flex flex-col items-center text-center">
+        {card.bestSeller && (
+          <div className="absolute -right-4 -top-4 bg-primary text-white font-black text-sm px-4 py-2 border-2 border-text-chocolate shadow-sticker-sm rotate-12 z-30">
+            BEST SELLER
+          </div>
+        )}
+        <div
+          className={`w-full aspect-square ${card.cardBg} border-2 border-text-chocolate mb-6 overflow-hidden relative`}
+        >
+          {card.image ? (
+            <img
+              src={card.image}
+              alt={card.title}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center bg-[#E6E6E6]">
+              <span
+                className="material-symbols-outlined text-8xl text-text-chocolate/20 group-hover:text-text-chocolate transition-colors duration-300"
+                style={{ fontVariationSettings: "'FILL' 1" }}
+              >
+                {card.icon}
+              </span>
+            </div>
+          )}
+          <div className="absolute top-2 right-2 bg-text-chocolate text-white text-xs font-bold px-2 py-1 rotate-3">
+            {card.tag}
+          </div>
+        </div>
+        <h3 className="text-3xl font-black text-text-chocolate mb-2 brand-font uppercase leading-none md:transform md:-rotate-1">
+          {card.title}
+        </h3>
+        <p className="text-text-chocolate font-medium mb-6 leading-tight mt-2">
+          {card.desc}
+        </p>
+        <div className="mt-auto w-full">
+          <motion.button
+            type="button"
+            className={`w-full py-3 ${card.btnClass} border-2 border-text-chocolate font-black uppercase shadow-[2px_2px_0px_0px_#2D1B0E] hover:bg-text-chocolate hover:text-white transition-colors`}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            {card.cta}
+          </motion.button>
+        </div>
+        <div
+          className="absolute -top-4 left-1/2 -translate-x-1/2 w-24 h-6 tape-strip"
+          style={{ rotate: card.tapeRotate }}
+        />
+      </div>
+    </>
+  );
+}
+
 export function Flavors() {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const onScroll = () => {
+      const first = el.querySelector('[data-flavor-slide]') as HTMLElement | null;
+      const slideWidth = first ? first.offsetWidth + 16 : el.clientWidth * 0.92;
+      const index = Math.round(el.scrollLeft / slideWidth);
+      setActiveIndex(Math.min(Math.max(0, index), cards.length - 1));
+    };
+    el.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+    return () => el.removeEventListener('scroll', onScroll);
+  }, []);
+
+  const goToSlide = (index: number) => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const first = el.querySelector('[data-flavor-slide]') as HTMLElement | null;
+    const step = first ? first.offsetWidth + 16 : el.clientWidth * 0.92;
+    el.scrollTo({ left: index * step, behavior: 'smooth' });
+  };
+
   return (
     <section className="py-20 px-6 relative" id="flavors">
       <svg
@@ -117,7 +220,45 @@ export function Flavors() {
           <div className="h-2 w-32 bg-accent-strawberry mx-auto rotate-2" />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-12 px-4">
+        {/* Mobile: horizontal slideshow */}
+        <div className="md:hidden">
+          <div
+            ref={scrollRef}
+            className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-2 -mx-4 px-4 scrollbar-hide"
+            style={{ scrollSnapType: 'x mandatory' }}
+          >
+            {cards.map((card) => (
+              <motion.div
+                key={card.id}
+                data-flavor-slide
+                className="flex-shrink-0 w-[88vw] max-w-[340px] snap-center group relative"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+              >
+                <div className={`relative ${card.rotateClass}`}>
+                  <FlavorCardContent card={card} />
+                </div>
+              </motion.div>
+            ))}
+          </div>
+          <div className="flex justify-center gap-2 mt-6">
+            {cards.map((_, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => goToSlide(i)}
+                className={`w-2.5 h-2.5 rounded-full transition-colors ${
+                  i === activeIndex ? 'bg-text-chocolate scale-125' : 'bg-text-chocolate/30 hover:bg-text-chocolate/50'
+                }`}
+                aria-label={`Go to slide ${i + 1}`}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Desktop: grid */}
+        <div className="hidden md:grid grid-cols-3 gap-12 px-4">
           {cards.map((card, i) => (
             <motion.div
               key={card.id}
@@ -128,59 +269,7 @@ export function Flavors() {
               whileHover={{ rotate: 0, zIndex: 20 }}
               transition={{ duration: 0.3 }}
             >
-              <div
-                className={`absolute inset-0 ${card.bgShadow} translate-y-3 translate-x-3 w-full h-full`}
-              />
-              <div className="relative bg-white border-4 border-text-chocolate p-6 h-full flex flex-col items-center text-center">
-                {card.bestSeller && (
-                  <div className="absolute -right-4 -top-4 bg-primary text-white font-black text-sm px-4 py-2 border-2 border-text-chocolate shadow-sticker-sm rotate-12 z-30">
-                    BEST SELLER
-                  </div>
-                )}
-                <div
-                  className={`w-full aspect-square ${card.cardBg} border-2 border-text-chocolate mb-6 overflow-hidden relative`}
-                >
-                  {card.image ? (
-                    <img
-                      src={card.image}
-                      alt={card.title}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="absolute inset-0 flex items-center justify-center bg-[#E6E6E6]">
-                      <span
-                        className="material-symbols-outlined text-8xl text-text-chocolate/20 group-hover:text-text-chocolate transition-colors duration-300"
-                        style={{ fontVariationSettings: "'FILL' 1" }}
-                      >
-                        {card.icon}
-                      </span>
-                    </div>
-                  )}
-                  <div className="absolute top-2 right-2 bg-text-chocolate text-white text-xs font-bold px-2 py-1 rotate-3">
-                    {card.tag}
-                  </div>
-                </div>
-                <h3 className="text-3xl font-black text-text-chocolate mb-2 brand-font uppercase leading-none md:transform md:-rotate-1">
-                  {card.title}
-                </h3>
-                <p className="text-text-chocolate font-medium mb-6 leading-tight mt-2">
-                  {card.desc}
-                </p>
-                <div className="mt-auto w-full">
-                  <motion.button
-                    type="button"
-                    className={`w-full py-3 ${card.btnClass} border-2 border-text-chocolate font-black uppercase shadow-[2px_2px_0px_0px_#2D1B0E] hover:bg-text-chocolate hover:text-white transition-colors`}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    {card.cta}
-                  </motion.button>
-                </div>
-                <div
-                  className="absolute -top-4 left-1/2 -translate-x-1/2 w-24 h-6 tape-strip"
-                  style={{ rotate: card.tapeRotate }}
-                />
-              </div>
+              <FlavorCardContent card={card} />
             </motion.div>
           ))}
         </div>

@@ -18,8 +18,9 @@ export default {
         "background-dark": "#1f1513",
       },
       fontFamily: {
-        display: ["Fredoka", "Plus Jakarta Sans", "sans-serif"],
+        display: ["Titan One", "cursive"],
         body: ["Plus Jakarta Sans", "sans-serif"],
+        product: ["Fredoka", "sans-serif"],
         hand: ["Permanent Marker", "cursive"],
       },
       backgroundImage: {
@@ -37,6 +38,9 @@ export default {
         sticker: "6px 6px 0px 0px #2D1B0E",
         "sticker-sm": "4px 4px 0px 0px #2D1B0E",
         "sticker-lg": "12px 12px 0px 0px #2D1B0E",
+        chunky: "4px 4px 0px 0px #2D1B0E",
+        "chunky-sm": "2px 2px 0px 0px #2D1B0E",
+        "chunky-lg": "6px 6px 0px 0px #2D1B0E",
         polaroid: "10px 10px 0px 0px rgba(45, 27, 14, 0.9)",
       },
     },
