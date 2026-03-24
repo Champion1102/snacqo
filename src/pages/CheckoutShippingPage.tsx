@@ -1,36 +1,19 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ShippingForm } from '@/components/checkout/ShippingForm';
 import { SavedAddressPicker } from '@/components/checkout/SavedAddressPicker';
 import { CheckoutOrderSummary } from '@/components/checkout/CheckoutOrderSummary';
 import { EmailVerificationModal } from '@/components/checkout/EmailVerificationModal';
-import { getCart, type CartItemResponse } from '@/api/cart';
-import { createOrder, createPaymentOrder, verifyPayment, cancelOrder } from '@/api/orders';
+import { getCart, getCartSummary, type CartItemResponse, type CartSummaryResponse } from '@/api/cart';
+import { createOrder, createPaymentOrder, verifyPayment, cancelOrder, formatPrice } from '@/api/orders';
 import { listAddresses, createAddress, type AddressResponse } from '@/api/addresses';
-import { validateCoupon } from '@/api/coupons';
 import { getCampuses, type CampusResponse } from '@/api/campuses';
 import { getSettings } from '@/api/settings';
-import { useCart } from '@/contexts/CartContext';
+import { useCart } from '@/contexts/useCart';
 import { useAuth } from '@/contexts/AuthContext';
 import { loadRazorpayScript } from '@/utils/razorpay';
 import type { ShippingFormData } from '@/types/checkout';
 import type { CheckoutOrderItem } from '@/types/checkout';
-
-function formatPrice(paise: number): string {
-  return `₹${(paise / 100).toFixed(2)}`;
-}
-
-// Must match backend tiered shipping (paise): <₹200 → ₹50, ₹200–₹498 → ₹100, ≥₹499 → free
-const FREE_SHIPPING_THRESHOLD_PAISE = 49_900;   // ₹499
-const SHIPPING_LOW_THRESHOLD_PAISE = 20_000;   // ₹200
-const SHIPPING_BELOW_200_PAISE = 5_000;        // ₹50
-const SHIPPING_200_TO_499_PAISE = 10_000;      // ₹100
-
-function getStandardShippingPaise(subtotalPaise: number): number {
-  if (subtotalPaise >= FREE_SHIPPING_THRESHOLD_PAISE) return 0;
-  if (subtotalPaise < SHIPPING_LOW_THRESHOLD_PAISE) return SHIPPING_BELOW_200_PAISE;
-  return SHIPPING_200_TO_499_PAISE;
-}
 
 function mapToCheckoutItem(item: CartItemResponse): CheckoutOrderItem {
   const v = item.variant;
@@ -85,7 +68,6 @@ function CampusDeliveryForm({
   const [phone, setPhone] = useState(initialPhone ?? '');
   const hasAppliedInitialRef = useRef(false);
 
-  // When parent first passes initial values from saved addresses (e.g. after they load), pre-fill once so user can edit
   useEffect(() => {
     const hasInitial = initialFirstName !== undefined || initialLastName !== undefined || initialPhone !== undefined;
     if (hasInitial && !hasAppliedInitialRef.current) {
@@ -176,7 +158,6 @@ export function CheckoutShippingPage() {
   const [pendingCampusOptions, setPendingCampusOptions] = useState<{ isCampus: boolean; campusId: string } | null>(null);
 
   const [items, setItems] = useState<CheckoutOrderItem[]>([]);
-  const [subtotalPaise, setSubtotalPaise] = useState(0);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -187,10 +168,13 @@ export function CheckoutShippingPage() {
   const [couponMessage, setCouponMessage] = useState<string | null>(null);
   const { refreshCart } = useCart();
 
+  // Server-computed pricing summary — never compute prices on the frontend
+  const [priceSummary, setPriceSummary] = useState<CartSummaryResponse['summary'] | null>(null);
+  const [summaryLoading, setSummaryLoading] = useState(false);
+
   // Saved addresses (logged-in users only)
   const [savedAddresses, setSavedAddresses] = useState<AddressResponse[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
-  // 'picker' = show saved addresses | 'form' = show new address form
   const [addressMode, setAddressMode] = useState<'picker' | 'form'>('picker');
 
   // Delivery type: standard (address) vs campus
@@ -198,17 +182,36 @@ export function CheckoutShippingPage() {
   const [campuses, setCampuses] = useState<CampusResponse[]>([]);
   const [selectedCampusId, setSelectedCampusId] = useState<string>('');
 
+  const isCampusDelivery = deliveryType === 'campus' && !!selectedCampusId;
+
+  // Fetch server-computed pricing summary whenever anything price-relevant changes.
+  // This is the Shopify/Swiggy pattern: backend is the single source of truth for all prices.
+  const fetchSummary = useCallback(async (
+    couponCodes: string[],
+    isCampus: boolean,
+    campusId: string,
+  ) => {
+    setSummaryLoading(true);
+    try {
+      const { summary } = await getCartSummary({
+        couponCodes: couponCodes.length > 0 ? couponCodes : undefined,
+        isCampusOrder: isCampus || undefined,
+        campusId: campusId || undefined,
+      });
+      setPriceSummary(summary);
+    } catch {
+      // Non-fatal — keep showing previous summary
+    } finally {
+      setSummaryLoading(false);
+    }
+  }, []);
+
+  // Initial load: cart items + addresses + settings + campuses
   useEffect(() => {
     const cartReq = getCart()
       .then(({ cart }) => {
         const list = (cart?.items ?? []) as CartItemResponse[];
         setItems(list.map(mapToCheckoutItem));
-        let total = 0;
-        for (const item of list) {
-          const v = item.variant;
-          if (v?.price != null) total += v.price * item.quantity;
-        }
-        setSubtotalPaise(total);
       })
       .catch(() => setItems([]));
 
@@ -235,18 +238,47 @@ export function CheckoutShippingPage() {
       .then(({ campuses: c }) => setCampuses(c))
       .catch(() => setCampuses([]));
 
-    Promise.all([cartReq, addrReq, settingsReq, campusesReq]).finally(() => setLoading(false));
-  }, [isLoggedIn]);
+    // Initial price summary (no coupons, standard delivery)
+    const summaryReq = fetchSummary([], false, '');
 
-  const isCampusDelivery = deliveryType === 'campus' && !!selectedCampusId;
-  const discountPaise = appliedCoupons.reduce((sum, c) => sum + c.discountAmount, 0);
-  const freeShipping = appliedCoupons.some((c) => c.freeShipping);
-  const shippingPaise = freeShipping || isCampusDelivery ? 0 : getStandardShippingPaise(subtotalPaise);
-  const subtotalStr = formatPrice(subtotalPaise);
-  const totalPaise = Math.max(0, subtotalPaise - discountPaise + shippingPaise);
-  const totalStr = formatPrice(totalPaise);
-  const discountStr = discountPaise > 0 ? formatPrice(discountPaise) : undefined;
-  const shippingStr = freeShipping || isCampusDelivery ? 'Free' : formatPrice(getStandardShippingPaise(subtotalPaise));
+    Promise.all([cartReq, addrReq, settingsReq, campusesReq, summaryReq]).finally(() => setLoading(false));
+  }, [isLoggedIn, fetchSummary]);
+
+  // When the user logs in via OTP on this page, refresh both the cart context (so the
+  // header count is correct) and the price summary (so the merged cart's total is shown).
+  // Also reset applied coupons — they were validated against the pre-login subtotal and
+  // must be re-validated against the merged cart.
+  const prevIsLoggedIn = useRef(isLoggedIn);
+  useEffect(() => {
+    if (!prevIsLoggedIn.current && isLoggedIn) {
+      // Auth state changed: guest → logged in
+      refreshCart();
+      setAppliedCoupons([]);
+      setCouponMessage('Your cart was updated after login. Please re-apply any coupon.');
+      fetchSummary([], isCampusDelivery, selectedCampusId);
+    }
+    prevIsLoggedIn.current = isLoggedIn;
+  }, [isLoggedIn, refreshCart, fetchSummary, isCampusDelivery, selectedCampusId]);
+
+  // Re-fetch summary whenever delivery type or campus changes (shipping amount may change)
+  useEffect(() => {
+    fetchSummary(
+      appliedCoupons.map((c) => c.code),
+      isCampusDelivery,
+      selectedCampusId,
+    );
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isCampusDelivery, selectedCampusId]);
+
+  // Derived display values from server summary (never computed locally)
+  const subtotalStr = priceSummary ? formatPrice(priceSummary.subtotal) : '…';
+  const totalStr = priceSummary ? formatPrice(priceSummary.total) : '…';
+  const discountStr = priceSummary && priceSummary.discountAmount > 0 ? formatPrice(priceSummary.discountAmount) : undefined;
+  const shippingStr = priceSummary
+    ? priceSummary.isFreeShipping
+      ? 'Free'
+      : formatPrice(priceSummary.shippingAmount)
+    : '…';
 
   const handleApplyCoupon = async (code: string) => {
     setCouponMessage(null);
@@ -255,31 +287,47 @@ export function CheckoutShippingPage() {
       setCouponMessage('This coupon is already applied.');
       return;
     }
+
+    const nextCoupons = allowMultipleCoupons
+      ? [...appliedCoupons.map((c) => c.code), codeUpper]
+      : [codeUpper];
+
+    // Validate by fetching the server summary with the new coupon list
     try {
-      const res = await validateCoupon(code, subtotalPaise, {
-        isCampusOrder: isCampusDelivery,
+      const { summary } = await getCartSummary({
+        couponCodes: nextCoupons,
+        isCampusOrder: isCampusDelivery || undefined,
         campusId: selectedCampusId || undefined,
       });
-      if (res.valid) {
-        const message = res.message ?? (res.freeShipping ? 'Free shipping applied.' : `Discount applied: ${formatPrice(res.discountAmount ?? 0)}`);
-        if (allowMultipleCoupons) {
-          setAppliedCoupons((prev) => [...prev, { code: codeUpper, discountAmount: res.discountAmount ?? 0, freeShipping: res.freeShipping ?? false, message }]);
-          setCouponMessage(message);
-        } else {
-          setAppliedCoupons([{ code: codeUpper, discountAmount: res.discountAmount ?? 0, freeShipping: res.freeShipping ?? false, message }]);
-          setCouponMessage(message);
-        }
-      } else {
-        setCouponMessage(res.message || 'Invalid coupon.');
+
+      const msg = summary.couponMessages.find((m) => m.code === codeUpper);
+      if (!msg?.valid) {
+        setCouponMessage(msg?.message ?? 'Invalid coupon.');
+        return;
       }
+
+      // All coupons in nextCoupons are valid — update state and summary together
+      setPriceSummary(summary);
+      if (allowMultipleCoupons) {
+        setAppliedCoupons((prev) => [
+          ...prev,
+          { code: codeUpper, discountAmount: 0, freeShipping: false, message: msg.message },
+        ]);
+      } else {
+        setAppliedCoupons([{ code: codeUpper, discountAmount: 0, freeShipping: false, message: msg.message }]);
+      }
+      setCouponMessage(msg.message);
     } catch {
       setCouponMessage('Could not validate coupon.');
     }
   };
 
-  const handleRemoveCoupon = (code: string) => {
-    setAppliedCoupons((prev) => prev.filter((c) => c.code.toUpperCase() !== code.toUpperCase()));
+  const handleRemoveCoupon = async (code: string) => {
+    const next = appliedCoupons.filter((c) => c.code.toUpperCase() !== code.toUpperCase());
+    setAppliedCoupons(next);
     setCouponMessage(null);
+    // Re-fetch summary without the removed coupon
+    await fetchSummary(next.map((c) => c.code), isCampusDelivery, selectedCampusId);
   };
 
   const addressToFormData = (addr: AddressResponse): ShippingFormData => {
@@ -304,7 +352,6 @@ export function CheckoutShippingPage() {
   };
 
   const handleSubmit = (data: ShippingFormData) => {
-    // Skip email verification if the user is already logged in
     if (isLoggedIn || isVerifiedFor(data.email)) {
       proceedToPayment(data);
       return;
@@ -319,7 +366,6 @@ export function CheckoutShippingPage() {
 
     const isCampus = options?.isCampus && options?.campusId;
 
-    // Save address to account if user opted in, is logged in, and not campus delivery
     if (data.saveInfo && isLoggedIn && !isCampus) {
       try {
         await createAddress({
@@ -333,7 +379,7 @@ export function CheckoutShippingPage() {
           isDefault: true,
         });
       } catch {
-        // Non-fatal: address save failing should not block checkout
+        // Non-fatal
       }
     }
 
@@ -358,17 +404,37 @@ export function CheckoutShippingPage() {
             shippingPincode: data.zipCode.trim(),
             ...(appliedCoupons.length > 0 ? { couponCodes: appliedCoupons.map((c) => c.code) } : {}),
           };
+
       const res = await createOrder(orderPayload);
       const orderId = res.order.id;
       const orderNumber = res.order.orderNumber;
       const email = data.email;
       const shippingName = `${data.firstName.trim()} ${data.lastName.trim()}`.trim();
 
+      // Detect price discrepancy between what the user saw and what the backend computed.
+      // This can happen if a product price changed or the cart was modified in another tab.
+      if (priceSummary && res.order.total !== priceSummary.total) {
+        const serverTotal = formatPrice(res.order.total);
+        const displayedTotal = formatPrice(priceSummary.total);
+        // Update the displayed summary to match the authoritative backend total
+        setPriceSummary((prev) =>
+          prev
+            ? {
+                ...prev,
+                subtotal: res.order.subtotal,
+                shippingAmount: res.order.shippingAmount,
+                discountAmount: res.order.discountAmount,
+                total: res.order.total,
+              }
+            : prev
+        );
+        console.warn(`[checkout] Price updated: displayed ${displayedTotal} → charged ${serverTotal}`);
+      }
+
       let paymentConfig: Awaited<ReturnType<typeof createPaymentOrder>>;
       try {
         paymentConfig = await createPaymentOrder(orderId);
       } catch (e) {
-        // Could not create Razorpay order — cancel the DB order and stay on checkout
         try { await cancelOrder(orderId); } catch { /* best-effort */ }
         setSubmitting(false);
         setError(e instanceof Error ? e.message : 'Could not start payment. Please try again.');
@@ -382,6 +448,8 @@ export function CheckoutShippingPage() {
         try {
           await cancelOrder(orderId);
           await refreshCart();
+          // Restore summary after cart is restored
+          await fetchSummary(appliedCoupons.map((c) => c.code), isCampusDelivery, selectedCampusId);
         } catch { /* best-effort */ }
         setSubmitting(false);
         if (reason === 'cancelled') {
@@ -393,7 +461,7 @@ export function CheckoutShippingPage() {
 
       const rzp = new Razorpay({
         key: paymentConfig.key,
-        amount: paymentConfig.amount,
+        amount: paymentConfig.amount,   // Always from the backend — never from local state
         currency: paymentConfig.currency,
         order_id: paymentConfig.razorpayOrderId,
         name: 'snacQO',
@@ -426,10 +494,12 @@ export function CheckoutShippingPage() {
     }
   };
 
-  const handleEmailVerified = () => {
+  const handleEmailVerified = async () => {
     if (!pendingFormData) return;
     setVerified(pendingFormData.email);
     setShowEmailModal(false);
+    // Refresh cart context so header count reflects the post-login merged cart
+    await refreshCart();
     proceedToPayment(pendingFormData, pendingCampusOptions ?? undefined);
     setPendingFormData(null);
     setPendingCampusOptions(null);
@@ -595,6 +665,7 @@ export function CheckoutShippingPage() {
             couponMessage={couponMessage ?? undefined}
             onApplyCoupon={handleApplyCoupon}
             onRemoveCoupon={handleRemoveCoupon}
+            summaryLoading={summaryLoading}
           />
         </div>
       </div>

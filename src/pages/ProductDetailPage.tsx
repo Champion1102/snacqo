@@ -6,8 +6,8 @@ import { ProductCard } from '@/components/ProductCard';
 import { ReviewCard } from '@/components/ReviewCard';
 import { getProductBySlug, getProductReviews, formatPrice, type ProductResponse, type ProductReviewResponse } from '@/api/products';
 import { getProducts } from '@/api/products';
-import { addCartItem } from '@/api/cart';
-import { useCart } from '@/contexts/CartContext';
+import { addCartItem, type CartItemResponse } from '@/api/cart';
+import { useCart } from '@/contexts/useCart';
 import type { Product } from '@/types/product';
 import type { ProductDetail, Review } from '@/types/productDetail';
 
@@ -104,7 +104,7 @@ export function ProductDetailPage() {
   const [related, setRelated] = useState<Product[]>([]);
   const [productReviews, setProductReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
-  const { refreshCart } = useCart();
+  const { applyCartResponse } = useCart();
 
   useEffect(() => {
     if (!slug) return;
@@ -150,21 +150,22 @@ export function ProductDetailPage() {
 
   const handleAddToCart = async (_detail: ProductDetail, sizeId: string, quantity: number) => {
     try {
-      await addCartItem(sizeId, quantity);
-      await refreshCart();
+      const { cart } = await addCartItem(sizeId, quantity);
+      applyCartResponse(cart.items as CartItemResponse[]);
     } catch {
       // optional: toast error
     }
   };
 
-  const handleRelatedAddToCart = async (p: Product, variantId?: string) => {
+  const handleRelatedAddToCart = async (p: Product, variantId?: string): Promise<CartItemResponse[] | void> => {
     const id = variantId ?? p.defaultVariantId;
     if (!id) return;
     try {
-      await addCartItem(id, 1);
-      await refreshCart();
+      const { cart } = await addCartItem(id, 1);
+      applyCartResponse(cart.items as CartItemResponse[]);
+      return cart.items as CartItemResponse[];
     } catch {
-      // optional: toast error
+      // ProductCard will call refreshCart on error
     }
   };
 

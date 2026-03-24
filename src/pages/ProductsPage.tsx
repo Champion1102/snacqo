@@ -4,8 +4,8 @@ import { CategoryFilter } from '@/components/CategoryFilter';
 import type { Product } from '@/types/product';
 import { getCategories } from '@/api/categories';
 import { getProducts, formatPrice, type ProductResponse } from '@/api/products';
-import { addCartItem } from '@/api/cart';
-import { useCart } from '@/contexts/CartContext';
+import { addCartItem, type CartItemResponse } from '@/api/cart';
+import { useCart } from '@/contexts/useCart';
 
 function mapProduct(p: ProductResponse): Product {
   const sortedImages = [...(p.images ?? [])].sort((a, b) => a.sortOrder - b.sortOrder);
@@ -46,7 +46,7 @@ export function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState('all');
-  const { refreshCart } = useCart();
+  const { applyCartResponse } = useCart();
 
   useEffect(() => {
     getCategories()
@@ -71,14 +71,15 @@ export function ProductsPage() {
 
   const filteredProducts = useMemo(() => products, [products]);
 
-  const handleAddToCart = async (product: Product, variantId?: string) => {
+  const handleAddToCart = async (product: Product, variantId?: string): Promise<CartItemResponse[] | void> => {
     const id = variantId ?? product.defaultVariantId;
     if (!id) return;
     try {
-      await addCartItem(id, 1);
-      await refreshCart();
+      const { cart } = await addCartItem(id, 1);
+      applyCartResponse(cart.items as CartItemResponse[]);
+      return cart.items as CartItemResponse[];
     } catch {
-      // show error optionally
+      // ProductCard will call refreshCart on error
     }
   };
 

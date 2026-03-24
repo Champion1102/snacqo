@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { CartItemCard } from '@/components/cart/CartItemCard';
 import { CartOrderSummary } from '@/components/cart/CartOrderSummary';
@@ -8,8 +8,10 @@ import {
   removeCartItem,
   type CartItemResponse,
 } from '@/api/cart';
-import { useCart } from '@/contexts/CartContext';
+import { useCart } from '@/contexts/useCart';
 import type { CartItem, CartSummary } from '@/types/cart';
+
+const DEBOUNCE_MS = 400;
 
 function formatPrice(paise: number): string {
   return `₹${(paise / 100).toFixed(2)}`;
@@ -37,7 +39,16 @@ export function CartPage() {
   const [summaryInView, setSummaryInView] = useState(false);
   const [scrolledPastSummary, setScrolledPastSummary] = useState(false);
   const summaryRef = useRef<HTMLDivElement>(null);
-  const { refreshCart } = useCart();
+  const { applyCartResponse } = useCart();
+
+  // Per-item debounce timers and pending quantities
+  const debounceTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  const pendingQtys = useRef<Record<string, number>>({});
+
+  // Clean up all timers on unmount
+  useEffect(() => () => {
+    Object.values(debounceTimers.current).forEach(clearTimeout);
+  }, []);
 
   useEffect(() => {
     const el = summaryRef.current;
@@ -84,41 +95,75 @@ export function CartPage() {
     };
   }, [items]);
 
-  const handleQuantityChange = async (id: string, delta: number) => {
-    const item = items.find((i) => i.id === id);
-    if (!item) return;
-    const newQty = Math.max(0, item.quantity + delta);
-    if (newQty === 0) {
-      await handleRemove(id);
-      return;
-    }
-    try {
-      await updateCartItemQuantity(item.variantId, newQty);
-      setItems((prev) =>
-        prev.map((i) => (i.id === id ? { ...i, quantity: newQty } : i))
-      );
-      await refreshCart();
-    } catch {
-      // refetch on error
-      getCart().then(({ cart }) =>
-        setItems((cart?.items ?? []).map(mapCartItem))
-      );
-    }
-  };
+  const syncItemToServer = useCallback(
+    (id: string, variantId: string, qty: number) => {
+      if (debounceTimers.current[id]) clearTimeout(debounceTimers.current[id]);
+      debounceTimers.current[id] = setTimeout(async () => {
+        delete debounceTimers.current[id];
+        const target = pendingQtys.current[id] ?? qty;
+        delete pendingQtys.current[id];
+        try {
+          const { cart } = target === 0
+            ? await removeCartItem(variantId)
+            : await updateCartItemQuantity(variantId, target);
+          applyCartResponse(cart.items as CartItemResponse[]);
+          setItems((cart.items as CartItemResponse[]).map(mapCartItem));
+        } catch {
+          getCart().then(({ cart }) => {
+            const serverItems = (cart?.items ?? []).map(mapCartItem);
+            setItems(serverItems);
+            applyCartResponse((cart?.items ?? []) as CartItemResponse[]);
+          });
+        }
+      }, DEBOUNCE_MS);
+    },
+    [applyCartResponse]
+  );
 
-  const handleRemove = async (id: string) => {
-    const item = items.find((i) => i.id === id);
-    if (!item) return;
-    try {
-      await removeCartItem(item.variantId);
-      setItems((prev) => prev.filter((i) => i.id !== id));
-      await refreshCart();
-    } catch {
-      getCart().then(({ cart }) =>
-        setItems((cart?.items ?? []).map(mapCartItem))
+  // Instantly update local quantity display; debounce the actual API call
+  const handleQuantityChange = useCallback(
+    (id: string, delta: number) => {
+      const item = items.find((i) => i.id === id);
+      if (!item) return;
+      const newQty = Math.max(0, item.quantity + delta);
+      pendingQtys.current[id] = newQty;
+      // Instant local update — no waiting
+      setItems((prev) => prev
+        .map((i) => (i.id === id ? { ...i, quantity: newQty } : i))
+        .filter((i) => i.quantity > 0)
       );
-    }
-  };
+      syncItemToServer(id, item.variantId, newQty);
+    },
+    [items, syncItemToServer]
+  );
+
+  const handleRemove = useCallback(
+    (id: string) => {
+      const item = items.find((i) => i.id === id);
+      if (!item) return;
+      // Cancel any pending debounce for this item
+      if (debounceTimers.current[id]) {
+        clearTimeout(debounceTimers.current[id]);
+        delete debounceTimers.current[id];
+      }
+      delete pendingQtys.current[id];
+      // Instantly remove from view
+      setItems((prev) => prev.filter((i) => i.id !== id));
+      // Fire remove immediately (no debounce needed — explicit user action)
+      removeCartItem(item.variantId)
+        .then(({ cart }) => {
+          applyCartResponse(cart.items as CartItemResponse[]);
+          setItems((cart.items as CartItemResponse[]).map(mapCartItem));
+        })
+        .catch(() => {
+          getCart().then(({ cart }) => {
+            setItems((cart?.items ?? []).map(mapCartItem));
+            applyCartResponse((cart?.items ?? []) as CartItemResponse[]);
+          });
+        });
+    },
+    [items, applyCartResponse]
+  );
 
   if (loading) {
     return (

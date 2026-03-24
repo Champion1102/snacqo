@@ -1,18 +1,21 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { useCart } from '@/contexts/CartContext';
+import { useCart } from '@/contexts/useCart';
 import { addCartItem, updateCartItemQuantity, removeCartItem } from '@/api/cart';
 import type { Product, ProductVariantOption } from '@/types/product';
+import type { CartItemResponse } from '@/api/cart';
+
+const DEBOUNCE_MS = 400;
 
 interface ProductCardProps {
   product: Product;
-  onAddToCart?: (product: Product, variantId?: string) => void;
+  onAddToCart?: (product: Product, variantId?: string) => Promise<CartItemResponse[] | void>;
   /** Alternate rotation on hover for visual variety in grid */
   hoverRotate?: 1 | -1;
 }
 
 export function ProductCard({ product, onAddToCart, hoverRotate = 1 }: ProductCardProps) {
-  const { refreshCart, getQuantityForVariant } = useCart();
+  const { applyCartResponse, getQuantityForVariant, refreshCart } = useCart();
   const variants = product.variants && product.variants.length > 0 ? product.variants : [];
   const defaultId = product.defaultVariantId ?? variants[0]?.id;
   const [selectedVariantId, setSelectedVariantId] = useState<string | null>(defaultId ?? null);
@@ -23,44 +26,110 @@ export function ProductCard({ product, onAddToCart, hoverRotate = 1 }: ProductCa
   const displayPrice = selectedVariant ? selectedVariant.price : product.price;
   const variantForCart = selectedVariantId ?? product.defaultVariantId;
   const isOutOfStock = selectedVariant ? selectedVariant.outOfStock : product.outOfStock ?? false;
-  const quantityInCart = variantForCart ? getQuantityForVariant(variantForCart) : 0;
-  const [updating, setUpdating] = useState(false);
 
-  const handleAddOne = async () => {
-    if (!variantForCart || isOutOfStock) return;
-    setUpdating(true);
-    try {
-      await addCartItem(variantForCart, 1);
-      await refreshCart();
-    } finally {
-      setUpdating(false);
+  // Server-confirmed quantity from context
+  const serverQty = variantForCart ? getQuantityForVariant(variantForCart) : 0;
+
+  // Local display quantity — updated instantly on every tap, no waiting for server
+  const [localQty, setLocalQty] = useState(serverQty);
+
+  // Keep localQty in sync when server value changes (e.g. after debounce reconcile or page refocus)
+  // but only when there's no pending debounce in flight
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingQtyRef = useRef<number | null>(null);
+  const addingFirstItemRef = useRef(false); // prevents double-fire on "Add to Cart"
+
+  useEffect(() => {
+    // Don't overwrite local state while user is actively tapping
+    if (debounceRef.current === null && pendingQtyRef.current === null) {
+      setLocalQty(serverQty);
     }
+  }, [serverQty]);
+
+  // Cleanup timer on unmount
+  useEffect(() => () => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+  }, []);
+
+  const flushToServer = useCallback(
+    (variantId: string, qty: number) => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      debounceRef.current = setTimeout(async () => {
+        debounceRef.current = null;
+        const target = pendingQtyRef.current ?? qty;
+        pendingQtyRef.current = null;
+        try {
+          const { cart } = target === 0
+            ? await removeCartItem(variantId)
+            : await updateCartItemQuantity(variantId, target);
+          applyCartResponse(cart.items as CartItemResponse[]);
+        } catch {
+          // Roll back display to last server value on error
+          setLocalQty(serverQty);
+          refreshCart();
+        }
+      }, DEBOUNCE_MS);
+    },
+    [applyCartResponse, refreshCart, serverQty]
+  );
+
+  const handleAddOne = () => {
+    if (!variantForCart || isOutOfStock) return;
+    const next = localQty + 1;
+    setLocalQty(next);
+    pendingQtyRef.current = next;
+    flushToServer(variantForCart, next);
   };
 
-  const handleRemoveOne = async () => {
-    if (!variantForCart || quantityInCart <= 0) return;
-    setUpdating(true);
-    try {
-      if (quantityInCart === 1) {
-        await removeCartItem(variantForCart);
-      } else {
-        await updateCartItemQuantity(variantForCart, quantityInCart - 1);
+  const handleRemoveOne = () => {
+    if (!variantForCart || localQty <= 0) return;
+    const next = Math.max(0, localQty - 1);
+    setLocalQty(next);
+    pendingQtyRef.current = next;
+    flushToServer(variantForCart, next);
+  };
+
+  // "Add to Cart" — qty 0 → 1. Instantly show stepper, fire API in background.
+  const handleAddToCartClick = () => {
+    if (!variantForCart || isOutOfStock || addingFirstItemRef.current) return;
+    addingFirstItemRef.current = true;
+    // Show stepper immediately — no waiting for server
+    setLocalQty(1);
+    pendingQtyRef.current = 1;
+
+    const fire = async () => {
+      try {
+        if (onAddToCart) {
+          const updatedItems = await onAddToCart(product, variantForCart);
+          if (updatedItems) applyCartResponse(updatedItems);
+        } else {
+          const { cart } = await addCartItem(variantForCart, 1);
+          applyCartResponse(cart.items as CartItemResponse[]);
+        }
+      } catch {
+        // Roll back the optimistic stepper show on error
+        setLocalQty(0);
+        pendingQtyRef.current = null;
+        refreshCart();
+      } finally {
+        addingFirstItemRef.current = false;
+        pendingQtyRef.current = null;
       }
-      await refreshCart();
-    } finally {
-      setUpdating(false);
-    }
+    };
+    fire();
   };
 
-  const handleAddToCartClick = async () => {
-    if (!variantForCart || isOutOfStock) return;
-    setUpdating(true);
-    try {
-      await onAddToCart?.(product, variantForCart);
-    } finally {
-      setUpdating(false);
+  // When variant changes, reset local qty to match that variant's server qty
+  const prevVariantRef = useRef(variantForCart);
+  if (prevVariantRef.current !== variantForCart) {
+    prevVariantRef.current = variantForCart;
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+      debounceRef.current = null;
     }
-  };
+    pendingQtyRef.current = null;
+    setLocalQty(serverQty);
+  }
 
   const priceLabel = 'Price';
 
@@ -158,31 +227,29 @@ export function ProductCard({ product, onAddToCart, hoverRotate = 1 }: ProductCa
           <div className="w-full py-3 bg-text-chocolate/20 text-text-chocolate/70 text-base border-2 border-text-chocolate/40 font-bold tracking-wider text-center btn-text uppercase cursor-not-allowed">
             Out of stock
           </div>
-        ) : quantityInCart > 0 ? (
+        ) : localQty > 0 ? (
           <div className="flex items-center bg-white border-2 border-text-chocolate shadow-[3px_3px_0px_0px_#2D1B0E]">
             <button
               type="button"
-              disabled={updating}
               onClick={(e) => {
                 e.preventDefault();
                 handleRemoveOne();
               }}
-              className="w-12 h-12 flex items-center justify-center hover:bg-gray-100 border-r-2 border-text-chocolate transition-colors disabled:opacity-50"
+              className="w-12 h-12 flex items-center justify-center hover:bg-gray-100 border-r-2 border-text-chocolate transition-colors active:bg-gray-200"
               aria-label="Decrease quantity"
             >
               <span className="material-symbols-outlined font-bold text-lg">remove</span>
             </button>
-            <span className="flex-1 text-center text-lg font-bold font-product text-text-chocolate py-2">
-              {quantityInCart}
+            <span className="flex-1 text-center text-lg font-bold font-product text-text-chocolate py-2 tabular-nums">
+              {localQty}
             </span>
             <button
               type="button"
-              disabled={updating || isOutOfStock}
               onClick={(e) => {
                 e.preventDefault();
                 handleAddOne();
               }}
-              className="w-12 h-12 flex items-center justify-center hover:bg-gray-100 border-l-2 border-text-chocolate transition-colors disabled:opacity-50"
+              className="w-12 h-12 flex items-center justify-center hover:bg-gray-100 border-l-2 border-text-chocolate transition-colors active:bg-gray-200"
               aria-label="Increase quantity"
             >
               <span className="material-symbols-outlined font-bold text-lg">add</span>
@@ -191,8 +258,7 @@ export function ProductCard({ product, onAddToCart, hoverRotate = 1 }: ProductCa
         ) : (
           <button
             type="button"
-            disabled={updating}
-            className="w-full py-2 sm:py-3 bg-primary text-white text-xs sm:text-base border-2 border-text-chocolate font-bold tracking-wider shadow-[3px_3px_0px_0px_#2D1B0E] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[1px_1px_0px_0px_#2D1B0E] transition-all btn-text uppercase disabled:opacity-70"
+            className="w-full py-2 sm:py-3 bg-primary text-white text-xs sm:text-base border-2 border-text-chocolate font-bold tracking-wider shadow-[3px_3px_0px_0px_#2D1B0E] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[1px_1px_0px_0px_#2D1B0E] transition-all btn-text uppercase active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0px_0px_#2D1B0E]"
             onClick={(e) => {
               e.preventDefault();
               handleAddToCartClick();

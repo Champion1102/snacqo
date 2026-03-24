@@ -18,6 +18,8 @@ interface CheckoutOrderSummaryProps {
   couponMessage?: string;
   onApplyCoupon?: (code: string) => Promise<void>;
   onRemoveCoupon?: (code: string) => void;
+  /** When true, price rows show a subtle refreshing state (server re-computing totals) */
+  summaryLoading?: boolean;
 }
 
 export function CheckoutOrderSummary({
@@ -30,6 +32,7 @@ export function CheckoutOrderSummary({
   couponMessage,
   onApplyCoupon,
   onRemoveCoupon,
+  summaryLoading = false,
 }: CheckoutOrderSummaryProps) {
   const [couponInput, setCouponInput] = useState('');
   const [applying, setApplying] = useState(false);
@@ -137,20 +140,20 @@ export function CheckoutOrderSummary({
             {couponMessage}
           </p>
         )}
-        <div className="space-y-3 pt-2">
+        <div className={`space-y-3 pt-2 transition-opacity duration-150 ${summaryLoading ? 'opacity-50' : 'opacity-100'}`}>
           <div className="flex justify-between text-text-chocolate font-bold">
             <span>Subtotal</span>
             <span>{subtotal}</span>
           </div>
           {discountAmount && (
             <div className="flex justify-between text-text-chocolate font-bold text-green-600">
-            <span>Discount</span>
-            <span>-{discountAmount}</span>
-          </div>
+              <span>Discount</span>
+              <span>-{discountAmount}</span>
+            </div>
           )}
           <div className="flex justify-between text-text-chocolate font-bold">
             <span>Shipping</span>
-            <span>{shippingAmount ?? '—'}</span>
+            <span>{summaryLoading ? '…' : (shippingAmount ?? '—')}</span>
           </div>
           <p className="flex items-center gap-2 text-sm font-bold text-primary mt-1">
             <span className="material-symbols-outlined text-base">local_shipping</span>
@@ -160,7 +163,9 @@ export function CheckoutOrderSummary({
         <div className="flex justify-between items-center mt-6 pt-6 border-t-2 border-text-chocolate">
           <span className="brand-font text-2xl">Total</span>
           <div className="flex items-end gap-2">
-            <span className="brand-font text-4xl text-primary">{total}</span>
+            <span className={`brand-font text-4xl text-primary transition-opacity duration-150 ${summaryLoading ? 'opacity-50' : 'opacity-100'}`}>
+              {total}
+            </span>
           </div>
         </div>
       </div>
